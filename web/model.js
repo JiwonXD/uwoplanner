@@ -71,3 +71,11 @@ export function validateState(value,data){
   clean.budget=[2000,10000,30000].includes(value.budget)?value.budget:10000;
   return clean;
 }
+
+export function migrateLegacyLocks(state){
+  const locked=state.locked||[];
+  state.required=[...new Set([...state.required,...locked])];
+  state.owned=[...new Set([...state.owned,...locked])];
+  state.locked=[];
+  return state;
+}

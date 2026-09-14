@@ -1,4 +1,4 @@
-import {KEY,EMPTY,initialState,indexCatalog,candidates,configuration,slotLimit,summarize,validateState} from './model.js';
+import {KEY,EMPTY,initialState,indexCatalog,candidates,configuration,slotLimit,summarize,validateState,migrateLegacyLocks} from './model.js';
 const $=s=>document.querySelector(s);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const grade=g=>g==='S+'?'제독':g;
@@ -17,6 +17,11 @@ function toggleRequired(id){
   else{if(!state.owned.includes(id))return;state.required.push(id);}
   commit();
 }
+function requiredButton(m){return `<button class="required-toggle" data-card-required="${m.id}" aria-label="${escape(m.name)} 필수 포함" aria-pressed="${state.required.includes(m.id)}" ${!state.owned.includes(m.id)?'disabled title="보유 항해사로 등록하면 필수 지정할 수 있습니다."':''}>${state.required.includes(m.id)?'✓ 필수':'필수'}</button>`;}
+function removeFromFleet(id){
+  state.ships=state.ships.map(row=>row.map(x=>x===id?null:x));
+  commit();notice(state.required.includes(id)?'승선을 해제했습니다. 필수 지정은 유지되어 다음 자동 맞춤에 다시 포함됩니다.':'승선을 해제했습니다.');
+}
 function collectionMates(){
   const q=$('#collection-search').value.trim().toLowerCase(),type=$('#collection-type').value,g=$('#collection-grade').value;
   return data.mates.filter(m=>(!q||`${m.name} ${m.job} ${m.grants.map(g=>data.abilityById.get(g.ability)?.name||'').join(' ')}`.toLowerCase().includes(q))&&(!type||type===m.type)&&(!g||g===m.grade)&&
@@ -27,7 +32,7 @@ function renderCollection(){
   $('#collection-counts').textContent=`보유 ${state.owned.length} · 미보유 ${data.mates.length-state.owned.length}`;
   $('#collection-visible').textContent=`검색 결과 ${list.length}명`;
   document.querySelectorAll('[data-collection-filter]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.collectionFilter===collectionFilter));b.textContent=`${{all:'전체',owned:'보유',missing:'미보유'}[b.dataset.collectionFilter]} ${b.dataset.collectionFilter==='all'?data.mates.length:b.dataset.collectionFilter==='owned'?state.owned.length:data.mates.length-state.owned.length}`;});
-  $('#collection-rows').innerHTML=list.map(m=>`<div class="collection-row"><label><input type="checkbox" data-own="${m.id}" aria-label="${escape(m.name)} 보유" ${state.owned.includes(m.id)?'checked':''}><span><b>${escape(m.name)}</b><small>${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</small></span></label><button class="text-button" data-collection-detail="${m.id}" aria-label="${escape(m.name)} 상세 정보">상세 보기</button></div>`).join('')||'<p class="empty-roster">조건에 맞는 항해사가 없어요.</p>';
+  $('#collection-rows').innerHTML=list.map(m=>`<div class="collection-row"><label><input type="checkbox" data-own="${m.id}" aria-label="${escape(m.name)} 보유" ${state.owned.includes(m.id)?'checked':''}><span><b>${escape(m.name)}</b><small>${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</small></span></label>${requiredButton(m)}<button class="text-button" data-collection-detail="${m.id}" aria-label="${escape(m.name)} 상세 정보">상세 보기</button></div>`).join('')||'<p class="empty-roster">조건에 맞는 항해사가 없어요.</p>';
 }
 function renderPage(){
   const collection=location.hash==='#collection';
@@ -63,7 +68,7 @@ function openPicker(s,c){
 function renderPreview(result){
   const before=summarize(state,data),after=summarize(result.state,data);
   $('#result-preview').hidden=false;
-  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p><div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}${state.locked.includes(id)?' · 잠금':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
+  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p><div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
 }
 
 function statsHtml(stats){return `<div class="stats-grid">${Object.entries(stats).map(([k,v])=>`<div class="stat-cell">${escape(k)}<strong>${v.toLocaleString()}</strong></div>`).join('')}</div>`;}
@@ -75,13 +80,13 @@ function renderRoster(){
   $('#roster-count').textContent=`${list.length}명`;
   $('#roster').innerHTML=list.map(m=>`<div class="mate-card ${placed.has(m.id)?'placed':''}">
     <span class="monogram ${m.type==='전투'?'combat':m.type==='교역'?'trade':''}">${escape(m.name.slice(0,1))}</span>
-    <button class="mate-info text-button" style="text-decoration:none;text-align:left" data-select="${m.id}" ${state.locked.includes(m.id)?'disabled':''} aria-label="${escape(m.name)} 배치 선택"><div class="mate-name"><span class="grade">${grade(m.grade)}</span>${escape(m.name)}</div><div class="mate-meta">${escape(m.type)} · ${escape(m.job)}${state.locked.includes(m.id)?' · 잠금':placed.has(m.id)?' · 승선':''}</div></button>
-    <button class="detail-button" data-detail="${m.id}" aria-label="${escape(m.name)} 상세">ⓘ</button></div>`).join('')||'<div class="empty-roster">조건에 맞는 항해사가 없어요.</div>';
+    <button class="mate-info text-button" style="text-decoration:none;text-align:left" data-select="${m.id}" aria-label="${escape(m.name)} 배치 선택"><div class="mate-name"><span class="grade">${grade(m.grade)}</span>${escape(m.name)}</div><div class="mate-meta">${escape(m.type)} · ${escape(m.job)}${placed.has(m.id)?' · 승선':''}</div></button>
+    ${requiredButton(m)}<button class="detail-button" data-detail="${m.id}" aria-label="${escape(m.name)} 상세">ⓘ</button></div>`).join('')||'<div class="empty-roster">조건에 맞는 항해사가 없어요.</div>';
 }
 function renderShips(summary){
   $('#ships').innerHTML=state.ships.slice(0,state.shipCount).map((row,s)=>`<article class="ship"><header class="ship-header"><div class="ship-title"><span class="ship-number">${String(s+1).padStart(2,'0')}</span><h3>선박 ${s+1}</h3></div><small>${row.filter(Boolean).length} / 11</small></header><div class="cabins">${row.map((id,c)=>{
-    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} ${c===0?'선장실':`선실 ${c}`} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`${c===0?'⚑ 선장실':`＋ 선실 ${c}`}`}</button>${mate?`<button class="lock-button ${state.locked.includes(id)?'locked':''}" data-lock="${id}" aria-pressed="${state.locked.includes(id)}" aria-label="${escape(mate.name)} 배치 잠금">${state.locked.includes(id)?'●':'○'}</button>`:''}</div>`;
-  }).join('')}</div><div class="ship-footer">${summary.targets.filter(t=>t.scope===s).length}개 선박 목표 · ${row.filter(id=>state.locked.includes(id)).length}명 잠금</div></article>`).join('');
+    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} ${c===0?'선장실':`선실 ${c}`} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`${c===0?'⚑ 선장실':`＋ 선실 ${c}`}`}</button>${mate?`<button class="remove-cabin" data-remove-cabin="${id}" aria-label="${escape(mate.name)} 승선 해제" title="승선 해제">×</button>`:''}</div>`;
+  }).join('')}</div><div class="ship-footer">${summary.targets.filter(t=>t.scope===s).length}개 선박 목표 · ${row.filter(id=>state.required.includes(id)).length}명 필수</div></article>`).join('');
 }
 function renderTargets(summary){
   const rows=summary.targets.map((t,i)=>{
@@ -90,7 +95,7 @@ function renderTargets(summary){
   const groups=[{name:'선단 효과',test:t=>t.scope==='fleet'},...Array.from({length:state.shipCount},(_,s)=>[{name:`선박 ${s+1} · 전투 효과`,test:t=>t.scope===s&&data.abilityById.get(t.ability).kind==='effect'},{name:`선박 ${s+1} · 해전 기술`,test:t=>t.scope===s&&data.abilityById.get(t.ability).kind==='skill'}]).flat()];
   $('#targets').innerHTML=groups.map(g=>{const content=summary.targets.map((t,i)=>g.test(t)?rows[i]:'').join('');return content?`<section class="target-group"><h3>${g.name}</h3>${content}</section>`:'';}).join('')||'<div class="empty-targets">등록된 목표가 없습니다.</div>';
   $('#solve').disabled=!state.targets.length||!!worker||(state.ownedOnly&&!state.owned.length);
-  $('#solve-readiness').textContent=!state.targets.length?'선단 효과·선박 효과·해전 기술 중 목표를 추가하세요.':state.ownedOnly&&!state.owned.length?'보유 항해사를 등록하거나 보유 제한을 해제하세요.':`${state.targets.length}개 목표 · 필수 ${state.required.length}명 · 잠금 ${state.locked.length}명`;
+  $('#solve-readiness').textContent=!state.targets.length?'선단 효과·선박 효과·해전 기술 중 목표를 추가하세요.':state.ownedOnly&&!state.owned.length?'보유 항해사를 등록하거나 보유 제한을 해제하세요.':`${state.targets.length}개 목표 · 필수 ${state.required.length}명`;
 }
 function render(){
   const summary=summarize(state,data);
@@ -151,7 +156,7 @@ async function init(){
   try{
     const response=await fetch('./catalog.json');if(!response.ok)throw Error('항해사 데이터를 불러오지 못했어요. 새로고침해 주세요.');
     catalog=await response.json();data=indexCatalog(catalog);
-    try{const saved=localStorage.getItem(KEY);if(saved)state=validateState(JSON.parse(saved),data);}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
+    try{const saved=localStorage.getItem(KEY);if(saved)state=migrateLegacyLocks(validateState(JSON.parse(saved),data));}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
     lastSaved=structuredClone(state);
     data.mates.sort((a,b)=>['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
     for(const name of Object.keys(data.mates[0].stats))$('#stat-priority').insertAdjacentHTML('beforeend',`<option>${escape(name)}</option>`);
@@ -167,7 +172,7 @@ async function init(){
   const openCollection=()=>{location.hash='collection';};
   $('#manage-owned').onclick=openCollection;
   $('#collection-close').onclick=()=>{location.hash='planner';};
-  $('#collection-rows').onclick=e=>{const b=e.target.closest('[data-collection-detail]');if(b&&!worker)showMate(b.dataset.collectionDetail);};
+  $('#collection-rows').onclick=e=>{if(worker)return;const required=e.target.closest('[data-card-required]');if(required){toggleRequired(required.dataset.cardRequired);return;}const b=e.target.closest('[data-collection-detail]');if(b&&!worker)showMate(b.dataset.collectionDetail);};
   for(const id of ['collection-search','collection-type','collection-grade'])$('#'+id).oninput=renderCollection;
   document.querySelectorAll('[data-collection-filter]').forEach(b=>b.onclick=()=>{collectionFilter=b.dataset.collectionFilter;renderCollection();});
   $('#collection-rows').onchange=e=>{if(worker){renderCollection();return;}if(e.target.matches('[data-own]')){setOwned(e.target.dataset.own,e.target.checked);commit();renderCollection();}};
@@ -183,14 +188,13 @@ async function init(){
   $('#owned-only').onchange=e=>{state.ownedOnly=e.target.checked;commit();};
   $('#stat-priority').onchange=e=>{state.statPriority=e.target.value;commit();};
   $('#budget').onchange=e=>{state.budget=Number(e.target.value);commit();};
-  $('#roster').onclick=e=>{if(worker)return;const detail=e.target.closest('[data-detail]');if(detail){showMate(detail.dataset.detail);return;}
+  $('#roster').onclick=e=>{if(worker)return;const required=e.target.closest('[data-card-required]');if(required){toggleRequired(required.dataset.cardRequired);return;}const detail=e.target.closest('[data-detail]');if(detail){showMate(detail.dataset.detail);return;}
     const button=e.target.closest('[data-select]');if(button&&pendingSlot){
       const id=button.dataset.select,[s,c]=pendingSlot;
-      if(state.locked.includes(id)){notice('잠금한 항해사는 이동할 수 없습니다.');return;}
       const previous=state.ships.flat().indexOf(id);if(previous>=0)state.ships[Math.floor(previous/11)][previous%11]=null;
       state.ships[s][c]=id;$('#roster-dialog').close();notice('');commit();
     }};
-  $('#ships').onclick=e=>{if(worker)return;const lock=e.target.closest('[data-lock]');if(lock){const id=lock.dataset.lock;state.locked=state.locked.includes(id)?state.locked.filter(x=>x!==id):[...state.locked,id];commit();return;}
+  $('#ships').onclick=e=>{if(worker)return;const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
     const slot=e.target.closest('[data-slot]');if(!slot)return;const [s,c]=slot.dataset.slot.split(',').map(Number);const occupant=state.ships[s][c];
     if(occupant)showMate(occupant);else openPicker(s,c);
   };
@@ -198,7 +202,7 @@ async function init(){
     if(count<state.shipCount&&state.ships.slice(count).flat().some(Boolean)&&!confirm('줄어드는 선박의 배치를 해제할까요?')){e.target.value=state.shipCount;return;}
     state.shipCount=count;for(let i=count;i<7;i++)state.ships[i]=Array(11).fill(null);
     state.locked=state.locked.filter(id=>state.ships.flat().includes(id));state.targets=state.targets.filter(t=>t.scope==='fleet'||t.scope<count);updateScope();commit();};
-  $('#clear').onclick=()=>{if(confirm('선박 배치와 배치 잠금을 모두 비울까요? 목표와 보유 정보는 남아요.')){state.ships=EMPTY();state.locked=[];commit();}};
+  $('#clear').onclick=()=>{if(confirm('선박 배치를 모두 비울까요? 목표·보유·필수 지정은 유지됩니다.')){state.ships=EMPTY();state.locked=[];commit();}};
   $('#target-form').onsubmit=e=>{e.preventDefault();if(worker)return;const a=data.abilityById.get($('#ability-select').value);if(!a)return;
     const level=Number($('#target-level').value);if(!Number.isInteger(level)||level<1||level>10)return;
     const scope=a.scope==='fleet'?'fleet':Number($('#target-scope').value);const old=state.targets.find(t=>t.ability===a.id&&t.scope===scope);
@@ -209,15 +213,13 @@ async function init(){
   $('#detail-content').onchange=e=>{if(!detailMate)return;
     if(e.target.id==='mate-transcended'){configureMate().transcended=e.target.checked;commit();}
     if(e.target.matches('[data-equip]')){const cfg=configureMate(),id=e.target.dataset.equip;const m=data.mateById.get(detailMate);
-      if(state.locked.includes(detailMate)){e.target.checked=cfg.effects.includes(id);notice('효과를 바꾸려면 먼저 배치 잠금을 해제해 주세요.');return;}
       if(e.target.checked&&cfg.effects.length>=slotLimit(m)){e.target.checked=false;notice(`장착 효과는 최대 ${slotLimit(m)}개예요. 다른 효과를 해제해 주세요.`);return;}
       cfg.effects=e.target.checked?[...cfg.effects,id]:cfg.effects.filter(x=>x!==id);$('#effect-count').textContent=cfg.effects.length;commit();}
   };
   $('#detail-content').onclick=e=>{if(e.target.id==='remove-mate'){
-    if(state.locked.includes(detailMate)){notice('배치 잠금을 먼저 해제해 주세요.');return;}
-    state.ships=state.ships.map(row=>row.map(id=>id===detailMate?null:id));$('#detail').close();commit();}};
+    $('#detail').close();removeFromFleet(detailMate);}};
   $('#stats-open').onclick=()=>{detailMate=null;const summary=summarize(state,data);showDialog(`<h2>선단 스탯</h2><p class="small">승선한 항해사의 원본 스탯 단순 합계예요. 선박 보정·장비·태생·직업 직접 효과는 포함하지 않아요.</p><h3>전체</h3>${statsHtml(summary.stats)}${summary.shipStats.slice(0,state.shipCount).map((stats,i)=>`<h3>선박 ${i+1}</h3>${statsHtml(stats)}`).join('')}`);};
-  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯 또는 적은 배치 인원을 고려해요. 잠금한 항해사의 자리와 장착 효과는 유지해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
+  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯 또는 적은 배치 인원을 고려해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
   $('#solve').onclick=()=>{
     if(!state.targets.length)return;if(state.ownedOnly&&!state.owned.length&&!state.locked.length){notice('보유 항해사를 선택하거나 보유 필터를 꺼 주세요.');return;}
     clearProposal();notice('');busy(true);
@@ -230,12 +232,12 @@ async function init(){
     }catch(error){finish(null);notice(error.message);}
   };
   $('#stop').onclick=()=>finish(proposed,true);
-  $('#apply-result').onclick=()=>{if(proposed){state=validateState(proposed.state,data);commit();$('#solve-status').textContent='추천 배치를 적용했어요. 승선 항해사를 누르면 장착 효과를 확인할 수 있어요.';}};
+  $('#apply-result').onclick=()=>{if(proposed){state=migrateLegacyLocks(validateState(proposed.state,data));commit();$('#solve-status').textContent='추천 배치를 적용했어요. 승선 항해사를 누르면 장착 효과를 확인할 수 있어요.';}};
   $('#dismiss-result').onclick=()=>{clearProposal();$('#solve-status').textContent='현재 배치를 유지했어요.';};
   $('#export').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hangro-fleet.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   $('#import').onclick=()=>$('#file').click();
   $('#file').onchange=async e=>{const file=e.target.files[0];if(!file)return;
-    try{if(file.size>2_000_000)throw Error('배치 파일이 너무 커요.');const imported=validateState(JSON.parse(await file.text()),data);
+    try{if(file.size>2_000_000)throw Error('배치 파일이 너무 커요.');const imported=migrateLegacyLocks(validateState(JSON.parse(await file.text()),data));
       if(confirm('현재 배치를 파일의 내용으로 바꿀까요?')){state=imported;updateScope();commit();notice('배치 파일을 불러왔어요.');}
     }catch(error){notice(`불러오기 실패: ${error.message}`);}finally{e.target.value='';}};
 }

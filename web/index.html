@@ -28,19 +28,19 @@
           </details><p id="solve-readiness" class="small"></p><button id="solve" class="primary">✧ 자동 맞춤</button><button id="stop" hidden>탐색 중지</button><p id="solve-status" class="small" aria-live="polite">목표를 추가한 뒤 자동 맞춤을 실행하세요.</p><div id="result-preview" hidden></div><button id="apply-result" class="primary" hidden>찾은 배치 적용</button><button id="dismiss-result" hidden>현재 배치 유지</button></div>
       </aside>
       <section id="fleet-panel" class="fleet-panel"><div class="fleet-toolbar"><div><h2>내 선단</h2><span id="selected-name" class="small">빈 선실을 눌러 항해사를 배치하세요</span></div><div><label>선박 <select id="ship-count" aria-label="선박 수"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option selected>7</option></select>척</label><button id="clear" class="quiet">배치 비우기</button></div></div>
-        <div class="fleet-info"><span><i class="dot"></i> 잠금한 배치는 자동 맞춤에서도 유지돼요</span><button id="stats-open" class="text-button">선단 스탯 보기 ↗</button></div>
+        <div class="fleet-info"><span><i class="dot"></i> 필수 항해사는 자동 맞춤에 포함됩니다</span><button id="stats-open" class="text-button">선단 스탯 보기 ↗</button></div>
         <div id="ships" class="ships"></div>
       </section>
 
     </div>
   <section id="collection" class="collection-page panel" aria-labelledby="collection-title" hidden>
     <div class="panel-title"><h2 id="collection-title">항해사 목록</h2><button id="collection-close">선단 배치로 돌아가기</button></div>
-    <p class="small">보유한 항해사를 체크하세요. 필수 포함은 조합 목표에서 별도로 지정합니다.</p>
+    <p class="small">보유 여부는 체크박스, 자동 맞춤 필수 포함은 ‘필수’ 버튼으로 지정하세요.</p>
     <p id="collection-counts" class="collection-counts" aria-live="polite"></p>
     <div class="collection-filters"><input id="collection-search" aria-label="보유 관리 검색" placeholder="이름·직업·효과·기술 검색"><select id="collection-type" aria-label="보유 관리 타입"><option value="">모든 타입</option><option>모험</option><option>교역</option><option>전투</option></select><select id="collection-grade" aria-label="보유 관리 등급"><option value="">모든 등급</option><option value="S+">제독</option><option>S</option><option>A</option><option>B</option><option>C</option></select></div>
     <div class="collection-sort"><label>정렬 <select id="collection-sort"><option value="grade">등급순</option><option value="name">이름순</option></select></label><button id="collection-reset" class="text-button">검색·필터 초기화</button></div><div class="collection-tabs" role="group" aria-label="보유 상태 필터"><button data-collection-filter="all" aria-pressed="true">전체</button><button data-collection-filter="owned" aria-pressed="false">보유</button><button data-collection-filter="missing" aria-pressed="false">미보유</button></div>
     <div class="collection-bulk"><span id="collection-visible"></span><button id="collection-add">검색 결과 모두 보유</button><button id="collection-remove">검색 결과 보유 해제</button></div>
-    <p class="small">보유 해제 시 필수 지정·배치 잠금도 해제돼요. ‘보유 항해사만 사용’을 켜면 미보유 항해사는 추천에서 제외돼요.</p>
+    <p class="small">보유 해제 시 필수 지정도 해제됩니다. ‘보유 항해사만 사용’을 켜면 미보유 항해사는 추천에서 제외돼요.</p>
     <div id="collection-rows" class="collection-rows"></div>
   </section>
     <footer><span>항로 · 대항해시대 오리진 팬 도구</span><span>데이터: <a href="https://uwo-fleet-simulator.web.app/" target="_blank" rel="noreferrer">Astraeus Fleet Simulator</a> · 2026.09.02 + 신규 항해사 2명</span><button id="about" class="text-button">계산 기준과 데이터 안내</button></footer>
