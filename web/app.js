@@ -207,7 +207,7 @@ async function init(){
   $('#target-form').onsubmit=e=>{e.preventDefault();if(worker)return;const a=data.abilityById.get($('#ability-select').value);if(!a)return;
     const level=Number($('#target-level').value);if(!Number.isInteger(level)||level<1||level>10)return;
     const scope=a.scope==='fleet'?'fleet':Number($('#target-scope').value);const old=state.targets.find(t=>t.ability===a.id&&t.scope===scope);
-    if(old)old.level=level;else if(state.targets.length<40)state.targets.push({ability:a.id,scope,level});else notice('목표는 최대 40개까지 추가할 수 있어요.');commit();};
+    if(old)old.level=level;else if(state.targets.length<40)state.targets.push({ability:a.id,scope,level});else{notice('목표는 최대 40개까지 추가할 수 있어요.');return;}commit();$('#target-added').textContent=`${a.name} · ${scope==='fleet'?'선단 전체':`선박 ${scope+1}`} Lv.${level} ${old?'수정':'추가'}`;$('#ability-search').value='';filterAbilities();$('#ability-search').focus();};
   $('#targets').onchange=e=>{if(worker)return;const input=e.target.closest('[data-target-level]');if(!input)return;const level=Number(input.value);if(!Number.isInteger(level)||level<1||level>10){input.value=state.targets[Number(input.dataset.targetLevel)].level;return;}state.targets[Number(input.dataset.targetLevel)].level=level;commit();};
   $('#targets').onclick=e=>{if(worker)return;const b=e.target.closest('[data-delete-target]');if(b){state.targets.splice(Number(b.dataset.deleteTarget),1);commit();}};
   $('#detail-close').onclick=()=>$('#detail').close();
