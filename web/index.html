@@ -29,9 +29,10 @@
         <div class="fleet-info"><span><i class="dot"></i> 잠금한 배치는 자동 맞춤에서도 유지돼요</span><button id="stats-open" class="text-button">선단 스탯 보기 ↗</button></div>
         <div id="ships" class="ships"></div>
       </section>
-      <aside id="goals-panel" class="panel goals-panel"><div class="panel-title"><h2>목표 효과</h2><span class="compass">✧</span></div><p class="small hint">선단 공통 목표와 선박별 목표를 추가하세요.</p>
-        <form id="target-form"><label class="field-label" for="ability-search">효과·기술 찾기</label><input id="ability-search" placeholder="예: 능숙한 돛 조종" autocomplete="off"><select id="ability-select" aria-label="목표 효과 또는 기술" size="4"></select>
-          <div class="target-options"><label>적용 대상<select id="target-scope" aria-label="목표 적용 대상"></select></label><label>목표 레벨<input id="target-level" type="number" min="1" max="10" value="10"></label></div><button class="add-target" type="submit">＋ 목표 추가</button></form>
+      <aside id="goals-panel" class="panel goals-panel"><div class="panel-title"><h2>조합 목표</h2><span class="compass">✧</span></div>
+        <div class="goal-modes" role="group" aria-label="목표 종류"><button data-goal-mode="fleet" aria-pressed="true">선단 효과</button><button data-goal-mode="ship" aria-pressed="false">선박 효과</button><button data-goal-mode="skill" aria-pressed="false">해전 기술</button></div>
+        <form id="target-form"><p id="goal-context" class="small hint"></p><label id="target-scope-label" class="field-label">대상 선박<select id="target-scope" aria-label="목표 적용 대상"></select></label><label id="ability-search-label" class="field-label" for="ability-search">모험·교역 효과 검색</label><input id="ability-search" placeholder="효과 이름 검색" autocomplete="off"><select id="ability-select" aria-label="목표 후보" size="4"></select><p id="ability-empty" class="small" hidden>검색 결과가 없습니다.</p>
+          <div class="target-options"><label>목표 레벨<input id="target-level" type="number" min="1" max="10" value="10"></label><button class="add-target" type="submit">＋ 목표 추가</button></div></form>
         <div id="required-list" class="required-list"></div><div id="targets" class="targets"></div>
         <div class="solve-box"><label class="field-label" for="stat-priority">목표 달성 후 우선할 스탯</label><select id="stat-priority"><option value="">적은 인원으로 배치</option></select><label class="field-label" for="budget">탐색 시간</label><select id="budget"><option value="2000">빠르게 · 2초</option><option value="10000" selected>충분히 · 10초</option><option value="30000">더 찾아보기 · 30초</option></select>
           <button id="solve" class="primary">✧ 자동 맞춤</button><button id="stop" hidden>탐색 중지</button><p id="solve-status" class="small" aria-live="polite">목표를 추가하면 조합을 찾아드려요.</p><button id="apply-result" class="primary" hidden>찾은 배치 적용</button><button id="dismiss-result" hidden>현재 배치 유지</button></div>
@@ -41,13 +42,14 @@
   </main>
   <dialog id="detail"><div id="detail-content"></div><button class="dialog-close" id="detail-close">닫기</button></dialog>
   <dialog id="collection" aria-labelledby="collection-title">
-    <div class="panel-title"><h2 id="collection-title">내 항해사 관리</h2><button id="collection-close">완료</button></div>
-    <p class="small">보유 체크로 목록을 정리하고, ★로 꼭 포함할 항해사를 지정하세요. 변경 즉시 저장돼요.</p>
+    <div class="panel-title"><h2 id="collection-title">보유 항해사 관리</h2><button id="collection-close">완료</button></div>
+    <p class="small">보유한 항해사를 체크하세요. 필수 포함은 조합 목표에서 별도로 지정합니다.</p>
     <p id="collection-counts" class="collection-counts" aria-live="polite"></p>
     <div class="collection-filters"><input id="collection-search" aria-label="보유 관리 검색" placeholder="이름·직업 검색"><select id="collection-type" aria-label="보유 관리 타입"><option value="">모든 타입</option><option>모험</option><option>교역</option><option>전투</option></select><select id="collection-grade" aria-label="보유 관리 등급"><option value="">모든 등급</option><option value="S+">제독</option><option>S</option><option>A</option><option>B</option><option>C</option></select></div>
-    <div class="collection-tabs" role="group" aria-label="보유 상태 필터"><button data-collection-filter="all" aria-pressed="true">전체</button><button data-collection-filter="owned" aria-pressed="false">보유</button><button data-collection-filter="missing" aria-pressed="false">미보유</button><button data-collection-filter="required" aria-pressed="false">필수</button></div>
+    <div class="collection-tabs" role="group" aria-label="보유 상태 필터"><button data-collection-filter="all" aria-pressed="true">전체</button><button data-collection-filter="owned" aria-pressed="false">보유</button><button data-collection-filter="missing" aria-pressed="false">미보유</button></div>
     <div class="collection-bulk"><span id="collection-visible"></span><button id="collection-add">검색 결과 모두 보유</button><button id="collection-remove">검색 결과 보유 해제</button></div>
     <p class="small">보유 해제 시 필수 지정·배치 잠금도 해제돼요. ‘보유한 항해사만 보기·계산’을 켜면 미보유 항해사는 추천에서 제외돼요.</p>
     <div id="collection-rows" class="collection-rows"></div>
   </dialog>
+  <dialog id="required-dialog" aria-labelledby="required-title"><div class="panel-title"><h2 id="required-title">필수 항해사 선택</h2><button id="required-close">완료</button></div><p class="small">보유 항해사 중 이번 조합에 반드시 포함할 인물을 선택하세요. 위치와 장착 효과는 자동으로 정합니다.</p><div id="required-selected" class="required-selected"></div><label class="field-label" for="required-search">보유 항해사 검색</label><input id="required-search" placeholder="이름·직업 검색"><div id="required-rows" class="collection-rows"></div><button id="required-open-owned" class="text-button">보유 항해사 관리로 이동</button></dialog>
 </body></html>
