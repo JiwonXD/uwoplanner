@@ -25,7 +25,20 @@ function renderCollection(){
   $('#collection-counts').textContent=`보유 ${state.owned.length} · 미보유 ${data.mates.length-state.owned.length}`;
   $('#collection-visible').textContent=`검색 결과 ${list.length}명`;
   document.querySelectorAll('[data-collection-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.collectionFilter===collectionFilter)));
-  $('#collection-rows').innerHTML=list.map(m=>`<div class="collection-row"><label><input type="checkbox" data-own="${m.id}" aria-label="${escape(m.name)} 보유" ${state.owned.includes(m.id)?'checked':''}><span><b>${escape(m.name)}</b><small>${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</small></span></label><span class="small hint">${state.owned.includes(m.id)?'보유':'미보유'}</span></div>`).join('')||'<p class="empty-roster">조건에 맞는 항해사가 없어요.</p>';
+  $('#collection-rows').innerHTML=list.map(m=>`<div class="collection-row"><label><input type="checkbox" data-own="${m.id}" aria-label="${escape(m.name)} 보유" ${state.owned.includes(m.id)?'checked':''}><span><b>${escape(m.name)}</b><small>${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</small></span></label><button class="text-button" data-collection-detail="${m.id}" aria-label="${escape(m.name)} 상세 정보">상세 보기</button></div>`).join('')||'<p class="empty-roster">조건에 맞는 항해사가 없어요.</p>';
+}
+function renderPage(){
+  const collection=location.hash==='#collection';
+  $('#workspace').hidden=collection;
+  $('#planner-heading').hidden=collection;
+  document.querySelector('.mobile-nav').hidden=collection;
+  $('#collection').hidden=!collection;
+  document.querySelectorAll('[data-page]').forEach(a=>{
+    if(a.dataset.page===(collection?'collection':'planner'))a.setAttribute('aria-current','page');
+    else a.removeAttribute('aria-current');
+  });
+  if(collection)renderCollection();
+  document.title=collection?'항해사 목록 · 항로':'선단 배치 · 항로';
 }
 function renderRequired(){
   const q=$('#required-search').value.trim().toLowerCase();
@@ -69,7 +82,7 @@ function render(){
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
   $('#stat-priority').value=state.statPriority;$('#budget').value=state.budget;
   $('#selected-name').textContent=selected?`${data.mateById.get(selected).name} · 배치할 선실을 선택하세요`:'배치할 항해사를 선택하세요';
-  renderRoster();renderShips(summary);renderTargets(summary);
+  renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
 }
 function filterAbilities(){
   const query=$('#ability-search').value.trim().toLowerCase();
@@ -122,17 +135,19 @@ async function init(){
     try{const saved=localStorage.getItem(KEY);if(saved)state=validateState(JSON.parse(saved),data);}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
     data.mates.sort((a,b)=>['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
     for(const name of Object.keys(data.mates[0].stats))$('#stat-priority').insertAdjacentHTML('beforeend',`<option>${escape(name)}</option>`);
-    $('#loading').hidden=true;$('#workspace').hidden=false;updateScope();filterAbilities();render();
+    $('#loading').hidden=true;$('#workspace').hidden=false;updateScope();filterAbilities();render();renderPage();
   }catch(error){$('#loading').textContent=error.message;return;}
   for(const id of ['search','type-filter','grade-filter'])$('#'+id).addEventListener('input',renderRoster);
-  const openCollection=()=>{if(worker)return;renderCollection();$('#collection').showModal();};
+  window.addEventListener('hashchange',renderPage);
+  const openCollection=()=>{location.hash='collection';};
   $('#manage-owned').onclick=openCollection;
-  $('#collection-close').onclick=()=>$('#collection').close();
+  $('#collection-close').onclick=()=>{location.hash='planner';};
+  $('#collection-rows').onclick=e=>{const b=e.target.closest('[data-collection-detail]');if(b&&!worker)showMate(b.dataset.collectionDetail);};
   for(const id of ['collection-search','collection-type','collection-grade'])$('#'+id).oninput=renderCollection;
   document.querySelectorAll('[data-collection-filter]').forEach(b=>b.onclick=()=>{collectionFilter=b.dataset.collectionFilter;renderCollection();});
-  $('#collection-rows').onchange=e=>{if(e.target.matches('[data-own]')){setOwned(e.target.dataset.own,e.target.checked);commit();renderCollection();}};
-  $('#collection-add').onclick=()=>{for(const m of collectionMates())setOwned(m.id,true);commit();renderCollection();};
-  $('#collection-remove').onclick=()=>{const list=collectionMates();if(list.length&&confirm(`검색 결과 ${list.length}명의 보유·필수·잠금을 해제할까요?`)){for(const m of list)setOwned(m.id,false);commit();renderCollection();}};
+  $('#collection-rows').onchange=e=>{if(worker){renderCollection();return;}if(e.target.matches('[data-own]')){setOwned(e.target.dataset.own,e.target.checked);commit();renderCollection();}};
+  $('#collection-add').onclick=()=>{if(worker)return;for(const m of collectionMates())setOwned(m.id,true);commit();renderCollection();};
+  $('#collection-remove').onclick=()=>{if(worker)return;const list=collectionMates();if(list.length&&confirm(`검색 결과 ${list.length}명의 보유·필수·잠금을 해제할까요?`)){for(const m of list)setOwned(m.id,false);commit();renderCollection();}};
   $('#required-list').onclick=e=>{if(worker)return;const b=e.target.closest('[data-unrequire]');if(b)toggleRequired(b.dataset.unrequire);else if(e.target.id==='pick-required'){renderRequired();$('#required-dialog').showModal();}};
   $('#required-close').onclick=()=>$('#required-dialog').close();$('#required-search').oninput=renderRequired;
   $('#required-rows').onchange=e=>{if(e.target.matches('[data-required-check]')){toggleRequired(e.target.dataset.requiredCheck);renderRequired();}};
