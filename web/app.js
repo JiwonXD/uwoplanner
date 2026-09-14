@@ -55,7 +55,7 @@ function renderRequired(){
 }
 function notice(text){$('#notice').textContent=text;$('#notice').hidden=!text;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{notice('브라우저 저장 공간을 사용할 수 없어요. 배치를 파일로 내보내 주세요.');}}
-function clearProposal(){proposed=null;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;$('#result-preview').hidden=true;}
+function clearProposal(){proposed=null;$('#search-more').hidden=true;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;$('#result-preview').hidden=true;}
 function commit(){
   if(lastSaved){history.push(lastSaved);if(history.length>20)history.shift();}
   lastSaved=structuredClone(state);clearProposal();$('#solve-status').textContent='설정이 변경되었습니다. 자동 맞춤을 실행하세요.';save();render();
@@ -106,7 +106,7 @@ function render(){
   $('#placed-count').textContent=summary.placed;$('#achieved-count').textContent=`${summary.achieved} / ${state.targets.length}`;
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
   $('#stat-priority-help').textContent=state.statPriority?`목표를 우선 만족시키고, 탐색한 후보 중 ${state.statPriority} 선단 합계가 높은 조합을 추천합니다. 합계를 높이기 위해 빈 선실도 채울 수 있습니다.`:'목표를 만족하는 데 필요한 항해사 수를 줄입니다.';
-  $('#stat-priority').value=state.statPriority;$('#budget').value=state.budget;
+  $('#stat-priority').value=state.statPriority;
   $('#selected-name').textContent='빈 선실을 눌러 항해사를 배치하세요';
   renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
 }
@@ -143,14 +143,14 @@ function showMate(id){
 }
 function configureMate(){const mate=data.mateById.get(detailMate);if(!state.configs[detailMate])state.configs[detailMate]=configuration(mate,state);return state.configs[detailMate];}
 function busy(value){document.body.classList.toggle('busy',value);$('#stop').hidden=!value;$('#solve').hidden=value;
-  for(const id of ['export','import','about','stats-open','budget','clear','ship-count','owned-only','stat-priority','manage-owned','undo'])$('#'+id).disabled=value;
+  for(const id of ['export','import','about','stats-open','clear','ship-count','owned-only','stat-priority','manage-owned','undo'])$('#'+id).disabled=value;
 }
 function resultText(r,stopped=false){
   const summary=summarize(r.state,data);
   return `${stopped?'탐색 중지':'탐색 완료'} · ${summary.achieved}/${state.targets.length}개 목표 달성. 아래에서 현재 배치와 비교한 뒤 적용하세요. 제한 시간 안에 찾은 결과이며 최적해를 보장하지 않습니다.`;
 }
 function finish(result,stopped=false){if(worker)worker.terminate();worker=null;busy(false);$('#undo').disabled=!history.length;
-  if(result){proposed=result;renderPreview(result);$('#solve-status').textContent=resultText(result,stopped);$('#apply-result').hidden=false;$('#dismiss-result').hidden=false;}
+  if(result){proposed=result;renderPreview(result);$('#solve-status').textContent=resultText(result,stopped);$('#apply-result').hidden=false;$('#dismiss-result').hidden=false;$('#search-more').hidden=summarize(result.state,data).achieved===state.targets.length;}
   else $('#solve-status').textContent='탐색을 중지했어요. 현재 배치를 유지해요.';
 }
 async function init(){
@@ -196,7 +196,6 @@ async function init(){
   });
   $('#owned-only').onchange=e=>{state.ownedOnly=e.target.checked;commit();};
   $('#stat-priority').onchange=e=>{state.statPriority=e.target.value;commit();};
-  $('#budget').onchange=e=>{state.budget=Number(e.target.value);commit();};
   $('#roster').onclick=e=>{if(worker)return;const required=e.target.closest('[data-card-required]');if(required){toggleRequired(required.dataset.cardRequired);return;}const detail=e.target.closest('[data-detail]');if(detail){showMate(detail.dataset.detail);return;}
     const button=e.target.closest('[data-select]');if(button&&pendingSlot){
       const id=button.dataset.select,[s,c]=pendingSlot;
@@ -229,17 +228,22 @@ async function init(){
     $('#detail').close();removeFromFleet(detailMate);}};
   $('#stats-open').onclick=()=>{detailMate=null;const summary=summarize(state,data);showDialog(`<h2>선단 스탯</h2><p class="small">승선한 항해사의 원본 스탯 단순 합계예요. 선박 보정·장비·태생·직업 직접 효과는 포함하지 않아요.</p><h3>전체</h3>${statsHtml(summary.stats)}${summary.shipStats.slice(0,state.shipCount).map((stats,i)=>`<h3>선박 ${i+1}</h3>${statsHtml(stats)}`).join('')}`);};
   $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯 또는 적은 배치 인원을 고려해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
-  $('#solve').onclick=()=>{
+  const startSearch=(more=false)=>{
+    if(worker)return;
+    const previous=more?proposed:null;
+    const searchState=structuredClone(previous?.state||state);searchState.budget=more?30000:10000;
     if(!state.targets.length)return;if(state.ownedOnly&&!state.owned.length&&!state.locked.length){notice('보유 항해사를 선택하거나 보유 필터를 꺼 주세요.');return;}
-    clearProposal();notice('');busy(true);
-    $('#solve-status').textContent='목표와 장착 칸 수에 맞는 조합을 찾고 있어요…';
+    clearProposal();proposed=previous;notice('');busy(true);
+    $('#solve-status').textContent=more?'이전 결과를 유지하며 30초 동안 더 찾아봅니다…':'10초 동안 목표에 맞는 조합을 찾고 있어요…';
     try{worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});
-      worker.onmessage=({data:r})=>{if(r.type==='error'){finish(null);notice(`계산을 완료하지 못했어요: ${r.message}`);return;}
+      worker.onmessage=({data:r})=>{if(r.type==='error'){finish(proposed);notice(`계산을 완료하지 못했어요: ${r.message}`);return;}
         proposed=r;if(r.type==='done')finish(r);else $('#solve-status').textContent=`${(r.elapsed/1000).toFixed(1)}초 · ${r.achieved}/${state.targets.length}개 목표 달성 · ${r.iterations}개 조합 탐색`;};
-      worker.onerror=()=>{finish(null);notice('자동 계산을 시작하지 못했어요. 새로고침 후 다시 시도해 주세요.');};
-      worker.postMessage({state:structuredClone(state),catalog});
-    }catch(error){finish(null);notice(error.message);}
+      worker.onerror=()=>{finish(proposed);notice('자동 계산을 시작하지 못했어요. 새로고침 후 다시 시도해 주세요.');};
+      worker.postMessage({state:searchState,catalog});
+    }catch(error){finish(proposed);notice(error.message);}
   };
+  $('#solve').onclick=()=>startSearch();
+  $('#search-more').onclick=()=>{if(proposed)startSearch(true);};
   $('#stop').onclick=()=>finish(proposed,true);
   $('#apply-result').onclick=()=>{if(proposed){state=migrateLegacyLocks(validateState(proposed.state,data));commit();$('#solve-status').textContent='추천 배치를 적용했어요. 승선 항해사를 누르면 장착 효과를 확인할 수 있어요.';}};
   $('#dismiss-result').onclick=()=>{clearProposal();$('#solve-status').textContent='현재 배치를 유지했어요.';};
