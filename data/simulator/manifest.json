@@ -1,0 +1,42 @@
+{
+  "source_name": "UWO Fleet Simulator by Astraeus",
+  "source_url": "https://uwo-fleet-simulator.web.app/",
+  "page_version": "260913_1137",
+  "snapshot_generated_at_utc": "2026-09-02T11:11:00Z",
+  "imported_at_utc": "2026-09-14T12:57:31.846769+00:00",
+  "source_mode": "public_static_fallback_not_live_firestore",
+  "files": [
+    {
+      "file": "data.js",
+      "url": "https://uwo-fleet-simulator.web.app/data.js?v=260913_1137",
+      "sha256": "275ebf2c579330d79e6defae7d2f9422b0b7a1bd4d5571ca31240e2866083438"
+    },
+    {
+      "file": "mates-baked.js",
+      "url": "https://uwo-fleet-simulator.web.app/mates-baked.js?v=260913_1137",
+      "sha256": "eca5fb0272ceb6e0fabfc566765971eacfae61287f177e22420d55e773647ead"
+    },
+    {
+      "file": "core.js",
+      "url": "https://uwo-fleet-simulator.web.app/js/core.js?v=260913_1137",
+      "sha256": "6d25f945d72964aee06e512007d7b82992af49264ee8eb877be4d2e6eda3808b"
+    },
+    {
+      "file": "calc.js",
+      "url": "https://uwo-fleet-simulator.web.app/js/calc.js?v=260913_1137",
+      "sha256": "cc66493d6e33c63f083b7fc8f6f579380877223e650ecad8ae171f28fca38e9b"
+    },
+    {
+      "file": "app.js",
+      "url": "https://uwo-fleet-simulator.web.app/js/app.js?v=260913_1137",
+      "sha256": "d94a25bd1ef876f5b28454fe1a78ca2a894e93fa6b88a7ccc6da264562aa1073"
+    }
+  ],
+  "limitations": [
+    "Not verified against live game data",
+    "Stats growth basis unknown",
+    "Reference simulator sums all owned effects, without active selection",
+    "Skill/effect stacking rules are source implementation, not game verification",
+    "Missing definitions and scope conflicts require review"
+  ]
+}

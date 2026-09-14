@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "source": "user_confirmed_in_conversation",
+  "fleet": {"max_ships": 7, "max_navigators_per_ship": 11},
+  "potential_effects": {
+    "activation": "selected_and_equipped",
+    "auto_activate_all_candidates": false,
+    "default_slot_count": 5,
+    "admiral_slot_count": 6,
+    "admiral_source_grade": "S+"
+  },
+  "effect_selection": {
+    "all_learned_effects_share_slots": true,
+    "ignore_unlock_level_for_optimization": true,
+    "candidate_origins": ["job", "character", "potential", "relationship"],
+    "exclude_origins": ["transcendence_3"]
+  },
+  "third_transcendence_effect": {
+    "activation": "third_transcendence_completed",
+    "fixed_per_navigator": true,
+    "dedicated_slot": true,
+    "player_selectable": false
+  },
+  "notes": [
+    "10·30·50·70레벨에 배우는 효과도 잠재 효과다. 후보 전체 중 일반 항해사 5개, 제독 6개를 선택한다. 원본 열 이름을 별도의 자동 적용 효과로 해석하지 않는다.",
+    "최적화는 습득 레벨을 제한하지 않는다. 추천 효과에 필요한 육성은 사용자가 맞춘다.",
+    "3차 초월칸은 정해진 고정 칸이며 3차 초월 시 해당 항해사의 효과가 활성화된다.",
+    "참고 사이트에서 S+는 제독을 나타낸다."
+  ]
+}

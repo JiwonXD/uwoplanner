@@ -1,0 +1,11 @@
+{
+  "name": "uwo-planner",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "dev": "node scripts/serve.mjs"
+  },
+  "engines": {"node": ">=22"}
+}

@@ -1,0 +1,2197 @@
+{
+  "counts": {
+    "navigators": 640,
+    "effects_with_definitions": 526,
+    "skills_with_definitions": 104,
+    "effect_grants": 6655,
+    "skill_grants": 1322
+  },
+  "added_navigators": [
+    "루이즈 드보주아외",
+    "마진 루즈",
+    "발렌티나 모렐",
+    "안토니오 말라테스타",
+    "자코모 데캄파니아",
+    "헬렌 라즈베리"
+  ],
+  "excel_only_navigators": [],
+  "changed_fields": {
+    "effects": 225,
+    "skills": 5
+  },
+  "missing_definitions": [
+    "투쟁적인",
+    "돌격",
+    "교전 기술"
+  ],
+  "scope_conflicts": [
+    "노련한 노 젓기",
+    "능숙한 노 젓기"
+  ],
+  "incomplete_level_values": [
+    {
+      "name": "만성 중독 백병",
+      "kind": "effect",
+      "missing_levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "바가지의 명인",
+      "kind": "effect",
+      "missing_levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "이동 정지 포격",
+      "kind": "effect",
+      "missing_levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "커틀라스 리즈의 인양 실력",
+      "kind": "effect",
+      "missing_levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "커틀라스 리즈의 인양 훈련",
+      "kind": "effect",
+      "missing_levels": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "공격 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "공격력 감소",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "공격력 강화",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "광역 충파: 내전 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "광역 포격: 내전 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "기술 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "난전 백병: 내전 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "명중 감소",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "명중 증가",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "방어력 증가",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병: 돛 파괴 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병: 방어 관통",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병: 좌초 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "백병: 화마 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "수리 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "수리: 단일 대상",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "수리: 대규모",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "수리: 소규모",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "수리: 전 범위",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "의술 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "의술: 단일 대상",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "의술: 대규모",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "의술: 소규모",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "의술: 전 범위",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "정밀 백병: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "정밀 충파: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "정밀 포격: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "정화: 재편성",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "지속 수리: 대규모",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "지속 의술: 대규모",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "추가 기동력 감소",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "추가 기동력 약화",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "추가 기동력 증가",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 돛 파괴 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 방어 관통",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 좌초 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 키 파괴 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "충파: 화마 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "치명타 발생 감소",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격: 돛 파괴 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격: 방어 관통",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격: 좌초 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격: 키 파괴 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "포격: 혼돈 유발",
+      "kind": "skill",
+      "missing_levels": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "행동 봉쇄",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "회피 감소",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
+      "name": "회피 증가",
+      "kind": "skill",
+      "missing_levels": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    }
+  ],
+  "changes": [
+    {
+      "name": "그레이스 오말리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "김만덕",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "교역품 교환 우대"
+    },
+    {
+      "name": "누이 호쿠",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "다나 칼로스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "다테 마사무네",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "라이너스 라쳇",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "교역품 교환 우대"
+    },
+    {
+      "name": "레온 페레로",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "로잘리아 폴헴",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "치명타 저항 기동"
+    },
+    {
+      "name": "마리벨",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "밀란다 베르테",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "비토리오 사르토리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "치명타 저항 기동"
+    },
+    {
+      "name": "사이이다 알 후라",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "치명타 저항 기동"
+    },
+    {
+      "name": "살바도르 레이스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "소연미",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "알 베자스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "앤 보니",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "에르네스트 로페스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "엘리자베스 셜랜드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "옷토 스피노라",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "윌리엄 애덤스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "이마이 사키",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "교역품 교환 우대"
+    },
+    {
+      "name": "이순신",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "이올린 팬드래건",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "일리아나 페레오스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "정성공",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "정화",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "제피르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "조안 페레로",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "찬드 비비",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "판매의 달인"
+    },
+    {
+      "name": "척계광",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "카탈리나 에란초",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "표트르 1세",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "피리 레이스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "피에트로 콘티",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "홍길동",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "탐험의 전리품"
+    },
+    {
+      "name": "흑태자",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "임전태세"
+    },
+    {
+      "name": "가더",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 채집 심화"
+    },
+    {
+      "name": "가스파로 발비",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "보석 교환 우대"
+    },
+    {
+      "name": "가은정",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "갈릴레오 갈릴레이",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 전투 속행"
+    },
+    {
+      "name": "나나미",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 관찰 심화"
+    },
+    {
+      "name": "나오미",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "주류 교환 우대"
+    },
+    {
+      "name": "나오에 가네쓰구",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "총포류 교환 우대"
+    },
+    {
+      "name": "나타샤",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "보석 교환 우대"
+    },
+    {
+      "name": "남혜",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 채집 심화"
+    },
+    {
+      "name": "네일리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "누르바누 술탄",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "니타",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "도쿠가와 이에야스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "돌로리스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 채집 심화"
+    },
+    {
+      "name": "라시드 팬드래건",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 관찰 심화"
+    },
+    {
+      "name": "랏바우트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "식료품 교환 우대"
+    },
+    {
+      "name": "레오나르도 다빈치",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "로베르토 에제키엘",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "로빈 보니르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "의약품 교환 우대"
+    },
+    {
+      "name": "로코 알렘켈",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "루도",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 관찰 심화"
+    },
+    {
+      "name": "류향령",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "섬유 교환 우대"
+    },
+    {
+      "name": "마르가레타 디 파르마",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공예품 교환 우대"
+    },
+    {
+      "name": "마르티네스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "마리 앙투아네트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "미술품 교환 우대"
+    },
+    {
+      "name": "마리아 마가레타 키르히",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "노련한 항해"
+    },
+    {
+      "name": "마와르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "향신료 교환 우대"
+    },
+    {
+      "name": "마히데브란",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 의술"
+    },
+    {
+      "name": "말리날리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "메레",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "메흐메트 슐루크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "모치즈키 치요메",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "무영",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "뮈에진자데 알리 파샤",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "시작 시 상태이상 신속 제거"
+    },
+    {
+      "name": "미나카미 유카",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "미령",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 관찰 심화"
+    },
+    {
+      "name": "미야모토 무사시",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "미카엘 에란초",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "바니 카우르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "바솔로뮤 로버츠",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "귀금속 교환 우대"
+    },
+    {
+      "name": "바스쿠 다가마",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 전투 속행"
+    },
+    {
+      "name": "바토리 에르제베트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "보석 교환 우대"
+    },
+    {
+      "name": "백여우",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "가축 교환 우대"
+    },
+    {
+      "name": "베아트리체 엘레나",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "조미료 교환 우대"
+    },
+    {
+      "name": "벤자밍",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "벨라 드루체",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "귀금속 교환 우대"
+    },
+    {
+      "name": "블라드 3세",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "블랙 레이븐",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "비비엔 하트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "시작 시 상태이상 신속 제거"
+    },
+    {
+      "name": "비앙카 카펠로",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "총포류 교환 우대"
+    },
+    {
+      "name": "사라 란드그리드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "사피예 술탄",
+      "field": "effects[10]",
+      "excel": "발리데 술탄의 교역",
+      "website": null
+    },
+    {
+      "name": "사피예 술탄",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "상경",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "직물 교환 우대"
+    },
+    {
+      "name": "석양",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "선희",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "가축 교환 우대"
+    },
+    {
+      "name": "설",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "소피 로잘린 비도크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "귀금속 교환 우대"
+    },
+    {
+      "name": "소피아 알렉세예브나",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "수니타",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "식료품 교환 우대"
+    },
+    {
+      "name": "스티드 보닛",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "가축 교환 우대"
+    },
+    {
+      "name": "스틴",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "스페란차 모레아",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "시나 린다이",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "향료 교환 우대"
+    },
+    {
+      "name": "시씬과크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 관찰 심화"
+    },
+    {
+      "name": "시클라 샤란",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "심광문",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공예품 교환 우대"
+    },
+    {
+      "name": "심만삼",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "아고스티노 바르바리고",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "총포류 교환 우대"
+    },
+    {
+      "name": "아구스틴",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공업품 교환 우대"
+    },
+    {
+      "name": "아난드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 의술"
+    },
+    {
+      "name": "아니사",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 전투 속행"
+    },
+    {
+      "name": "아델라 플라멩코",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "향료 교환 우대"
+    },
+    {
+      "name": "아델리나",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "직물 교환 우대"
+    },
+    {
+      "name": "아르드비",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "보석 교환 우대"
+    },
+    {
+      "name": "아르칸 베르다드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공예품 교환 우대"
+    },
+    {
+      "name": "아멜리아 셜랜드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "아미나",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "아세네트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "아이든 레이스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "아이셀",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "노련한 항해"
+    },
+    {
+      "name": "아이작 뉴턴",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 관찰 속행"
+    },
+    {
+      "name": "안나 프림로즈",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공예품 교환 우대"
+    },
+    {
+      "name": "안드레스 데우르다네타",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 관찰 속행"
+    },
+    {
+      "name": "안사제",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "안젤라 레오니다스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "안젤리카",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "알라마트 니 우르두자",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "알레시아 세레티",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "알바로 데 바잔",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "치명타 저항 기동"
+    },
+    {
+      "name": "알베르트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "식료품 교환 우대"
+    },
+    {
+      "name": "알테어 유스티나 카이엔",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "귀금속 교환 우대"
+    },
+    {
+      "name": "알프레드 로우",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 채집 속행"
+    },
+    {
+      "name": "에드워드 티치",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "에르난 베리오",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "엘리자베스 팬드래건",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "엘리프",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 채집 심화"
+    },
+    {
+      "name": "연희",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "예바",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "미술품 교환 우대"
+    },
+    {
+      "name": "예카테리나 1세",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "노련한 항해"
+    },
+    {
+      "name": "오다 노부나가",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "오렐리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "노련한 항해"
+    },
+    {
+      "name": "오루츠 레이스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "오즈월드 레밍톤",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 수리"
+    },
+    {
+      "name": "오필리아 암레트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "오필리어 버킹엄",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "보석 교환 우대"
+    },
+    {
+      "name": "옹은설",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 관찰 심화"
+    },
+    {
+      "name": "우미노 스텔라",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "울로리악",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "윌리엄 셜랜드",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "이칼 반 루벤",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 채집 심화"
+    },
+    {
+      "name": "이토 리츠카",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "무기류 교환 우대"
+    },
+    {
+      "name": "인두마티",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 전투 속행"
+    },
+    {
+      "name": "임화",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "섬유 교환 우대"
+    },
+    {
+      "name": "입부",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "잉게보르크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "채집 후 전투 속행"
+    },
+    {
+      "name": "자령",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 관찰 심화"
+    },
+    {
+      "name": "자령",
+      "field": "skills[0]",
+      "excel": "충파: 혼란 윺발",
+      "website": "충파: 혼란 유발"
+    },
+    {
+      "name": "잔 다르크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "잔수",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 채집 속행"
+    },
+    {
+      "name": "장 플뢰리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "장금",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 의술"
+    },
+    {
+      "name": "전우치",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "주류 교환 우대"
+    },
+    {
+      "name": "제바히르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "제임스 쿡",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "조커 다실버",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 수리"
+    },
+    {
+      "name": "존 호킨스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "죽음의 신 루돌프",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "줄리 도비니",
+      "field": "effects[10]",
+      "excel": "매력적인 노래",
+      "website": null
+    },
+    {
+      "name": "줄리 도비니",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "진양옥",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "청린",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "총포류 교환 우대"
+    },
+    {
+      "name": "체사레 보르자",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "기호품 교환 우대"
+    },
+    {
+      "name": "최무선",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "치트랄리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 의술"
+    },
+    {
+      "name": "카라 룸루",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "잡화 교환 우대"
+    },
+    {
+      "name": "카라 마우에",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "잡화 교환 우대"
+    },
+    {
+      "name": "카를라 리치에리",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "카자 아미고",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "염료 교환 우대"
+    },
+    {
+      "name": "칼스 브란트",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "케이타 자하라",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "켈레벡",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 관찰 심화"
+    },
+    {
+      "name": "코르넬리아",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "쿠알라 빈티 파하이비",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 전투 속행"
+    },
+    {
+      "name": "쿤 그리어",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 채집 속행"
+    },
+    {
+      "name": "크로우",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "크리스토발 콜론",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 채집 심화"
+    },
+    {
+      "name": "크리스티나",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "시작 시 상태이상 신속 제거"
+    },
+    {
+      "name": "클라라 반 슈네",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "조미료 교환 우대"
+    },
+    {
+      "name": "클라스 라슨 플레밍",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "클로에 드라보메",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "타마",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "타마야",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "타츠마루",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "토고 그리마니",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "토마스 튜",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "트레볼 에스티브라",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "티노카틀",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "생물 채집 심화"
+    },
+    {
+      "name": "파비오 멘데스",
+      "field": "effects[10]",
+      "excel": "시작 시 고급 의술",
+      "website": null
+    },
+    {
+      "name": "파비오 멘데스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "영속 의술"
+    },
+    {
+      "name": "파비오 멘데스",
+      "field": "skills[2]",
+      "excel": "지속 의술: 대규모",
+      "website": null
+    },
+    {
+      "name": "파트리스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "조미료 교환 우대"
+    },
+    {
+      "name": "페르난도 데마가야네스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 관찰 심화"
+    },
+    {
+      "name": "푸르나마",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "시작 시 상태이상 신속 제거"
+    },
+    {
+      "name": "프랜시스 드레이크",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "전투적인 관찰 심화"
+    },
+    {
+      "name": "프레드릭",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "식료품 교환 우대"
+    },
+    {
+      "name": "프리다 스텐스도테르",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "조미료 교환 우대"
+    },
+    {
+      "name": "피얄레 파샤",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관측 후 채집 속행"
+    },
+    {
+      "name": "피얄레 파샤",
+      "field": "skills[2]",
+      "excel": "지속 의술: 대규모",
+      "website": null
+    },
+    {
+      "name": "하산",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "하야 벨",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "공업품 교환 우대"
+    },
+    {
+      "name": "하웰 데이비스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "백병 임전태세"
+    },
+    {
+      "name": "하이레딘 레이스",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "포격 임전태세"
+    },
+    {
+      "name": "하코보 포르툰데",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "광석 교환 우대"
+    },
+    {
+      "name": "호레이쇼 넬슨",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "충파 임전태세"
+    },
+    {
+      "name": "황진",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "관찰 채집 심화"
+    },
+    {
+      "name": "G.S",
+      "field": "effects[12]",
+      "excel": null,
+      "website": "노련한 항해"
+    },
+    {
+      "name": "디에고 데아라나",
+      "field": "effects[10]",
+      "excel": "거점 방어",
+      "website": null
+    },
+    {
+      "name": "메리 리드",
+      "field": "effects[10]",
+      "excel": "터놓은 비밀",
+      "website": null
+    },
+    {
+      "name": "메리 스튜어트",
+      "field": "effects[10]",
+      "excel": "직물 거래의 신",
+      "website": null
+    },
+    {
+      "name": "샤를 달타냥",
+      "field": "effects[10]",
+      "excel": "확실한 검술",
+      "website": null
+    },
+    {
+      "name": "셀리메",
+      "field": "effects[10]",
+      "excel": "험지 관찰",
+      "website": null
+    },
+    {
+      "name": "셀리메",
+      "field": "skills[2]",
+      "excel": "지속 의술: 대규모",
+      "website": null
+    },
+    {
+      "name": "주앙 다노바",
+      "field": "effects[10]",
+      "excel": "작은 소음",
+      "website": null
+    },
+    {
+      "name": "카테리나 데메디치",
+      "field": "effects[10]",
+      "excel": "자신있는 협상가",
+      "website": null
+    },
+    {
+      "name": "나대용",
+      "field": "effects[10]",
+      "excel": "방어 기동",
+      "website": null
+    },
+    {
+      "name": "엘리자베스 비제 르 브룅",
+      "field": "effects[10]",
+      "excel": "유리한 염료거래",
+      "website": null
+    },
+    {
+      "name": "울루치 알리",
+      "field": "effects[10]",
+      "excel": "이동 정지 충파",
+      "website": null
+    },
+    {
+      "name": "울루치 알리",
+      "field": "skills[2]",
+      "excel": "충파: 화마 유발",
+      "website": null
+    },
+    {
+      "name": "이운룡",
+      "field": "effects[10]",
+      "excel": "유능한 포수",
+      "website": null
+    },
+    {
+      "name": "조르조 바사리",
+      "field": "effects[10]",
+      "excel": "프레스코식 소묘법",
+      "website": null
+    },
+    {
+      "name": "하얌 우룩",
+      "field": "effects[10]",
+      "excel": "환호받는 정치인",
+      "website": null
+    },
+    {
+      "name": "비올란테 도리아",
+      "field": "effects[10]",
+      "excel": "듣고 싶은 음악",
+      "website": null
+    },
+    {
+      "name": "프란체스카 카치니",
+      "field": "effects[10]",
+      "excel": "듣고 싶은 음악",
+      "website": null
+    }
+  ]
+}

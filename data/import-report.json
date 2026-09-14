@@ -1,0 +1,32 @@
+{
+  "navigator_count": 634,
+  "grades": {
+    "S+": 36,
+    "S": 171,
+    "A": 89,
+    "B": 224,
+    "C": 114
+  },
+  "stat_values": 7608,
+  "ability_counts": {
+    "effect": 496,
+    "skill": 107
+  },
+  "grant_counts": {
+    "effect": 6401,
+    "skill": 1314
+  },
+  "explicit_level_grants": 236,
+  "uncategorized_effects": 314,
+  "unresolved_effect_scopes": 496,
+  "duplicate_names": 0,
+  "invalid_stats": 0,
+  "limitations": [
+    "파일에 저장된 값의 스냅샷이며 최신 게임 데이터 여부는 검증하지 않음",
+    "스탯의 성장·장비·레벨 기준 미확인",
+    "효과 분류는 효과별 목록에 존재하는 이름만 근거와 함께 채움",
+    "LV2는 원문 표기 레벨로 보존하며 중첩 기여량으로 확정하지 않음",
+    "효과 적용 범위, 중첩 공식, 상한 및 활성화 조건 추가 확인 필요",
+    "순위표의 주관적 점수는 스탯에 포함하지 않음"
+  ]
+}
