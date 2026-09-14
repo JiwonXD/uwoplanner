@@ -3,9 +3,11 @@ const $=s=>document.querySelector(s);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const grade=g=>g==='S+'?'제독':g;
 const labels={job:'습득 효과',character:'습득 효과',potential:'잠재 후보',relationship:'인연',transcendence_3:'3차 초월'};
-let data,catalog,state=initialState(),selected=null,worker=null,proposed=null,detailMate=null;
+let data,catalog,state=initialState(),worker=null,proposed=null,detailMate=null;
 let collectionFilter='all';
 let goalMode='fleet';
+let pendingSlot=null,lastSaved=null;
+const history=[];
 function setOwned(id,value){
   state.owned=value?[...new Set([...state.owned,id])]:state.owned.filter(x=>x!==id);
   if(!value){state.required=state.required.filter(x=>x!==id);state.locked=state.locked.filter(x=>x!==id);}
@@ -17,14 +19,14 @@ function toggleRequired(id){
 }
 function collectionMates(){
   const q=$('#collection-search').value.trim().toLowerCase(),type=$('#collection-type').value,g=$('#collection-grade').value;
-  return data.mates.filter(m=>(!q||`${m.name} ${m.job}`.toLowerCase().includes(q))&&(!type||type===m.type)&&(!g||g===m.grade)&&
-    (collectionFilter==='all'||collectionFilter==='owned'&&state.owned.includes(m.id)||collectionFilter==='missing'&&!state.owned.includes(m.id)));
+  return data.mates.filter(m=>(!q||`${m.name} ${m.job} ${m.grants.map(g=>data.abilityById.get(g.ability)?.name||'').join(' ')}`.toLowerCase().includes(q))&&(!type||type===m.type)&&(!g||g===m.grade)&&
+    (collectionFilter==='all'||collectionFilter==='owned'&&state.owned.includes(m.id)||collectionFilter==='missing'&&!state.owned.includes(m.id))).sort((a,b)=>$('#collection-sort').value==='name'?a.name.localeCompare(b.name,'ko'):['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
 }
 function renderCollection(){
   const list=collectionMates();
   $('#collection-counts').textContent=`보유 ${state.owned.length} · 미보유 ${data.mates.length-state.owned.length}`;
   $('#collection-visible').textContent=`검색 결과 ${list.length}명`;
-  document.querySelectorAll('[data-collection-filter]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.collectionFilter===collectionFilter)));
+  document.querySelectorAll('[data-collection-filter]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.collectionFilter===collectionFilter));b.textContent=`${{all:'전체',owned:'보유',missing:'미보유'}[b.dataset.collectionFilter]} ${b.dataset.collectionFilter==='all'?data.mates.length:b.dataset.collectionFilter==='owned'?state.owned.length:data.mates.length-state.owned.length}`;});
   $('#collection-rows').innerHTML=list.map(m=>`<div class="collection-row"><label><input type="checkbox" data-own="${m.id}" aria-label="${escape(m.name)} 보유" ${state.owned.includes(m.id)?'checked':''}><span><b>${escape(m.name)}</b><small>${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</small></span></label><button class="text-button" data-collection-detail="${m.id}" aria-label="${escape(m.name)} 상세 정보">상세 보기</button></div>`).join('')||'<p class="empty-roster">조건에 맞는 항해사가 없어요.</p>';
 }
 function renderPage(){
@@ -48,7 +50,22 @@ function renderRequired(){
 }
 function notice(text){$('#notice').textContent=text;$('#notice').hidden=!text;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch{notice('브라우저 저장 공간을 사용할 수 없어요. 배치를 파일로 내보내 주세요.');}}
-function commit(){proposed=null;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;save();render();}
+function clearProposal(){proposed=null;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;$('#result-preview').hidden=true;}
+function commit(){
+  if(lastSaved){history.push(lastSaved);if(history.length>20)history.shift();}
+  lastSaved=structuredClone(state);clearProposal();$('#solve-status').textContent='설정이 변경되었습니다. 자동 맞춤을 실행하세요.';save();render();
+}
+function openPicker(s,c){
+  pendingSlot=[s,c];$('#picker-title').textContent=`선박 ${s+1} · ${c===0?'선장실':`선실 ${c}`}`;
+  $('#picker-context').textContent='배치할 항해사를 선택하세요. 이미 승선한 항해사는 이 자리로 이동합니다.';
+  renderRoster();$('#roster-dialog').showModal();$('#search').focus();
+}
+function renderPreview(result){
+  const before=summarize(state,data),after=summarize(result.state,data);
+  $('#result-preview').hidden=false;
+  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p><div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}${state.locked.includes(id)?' · 잠금':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
+}
+
 function statsHtml(stats){return `<div class="stats-grid">${Object.entries(stats).map(([k,v])=>`<div class="stat-cell">${escape(k)}<strong>${v.toLocaleString()}</strong></div>`).join('')}</div>`;}
 function renderRoster(){
   const query=$('#search').value.trim().toLowerCase();const type=$('#type-filter').value;const g=$('#grade-filter').value;
@@ -56,9 +73,9 @@ function renderRoster(){
   const list=data.mates.filter(m=>(!type||m.type===type)&&(!g||m.grade===g)&&(!state.ownedOnly||owned.has(m.id))&&
     (!query||`${m.name} ${m.job} ${m.grants.map(x=>data.abilityById.get(x.ability)?.name||'').join(' ')}`.toLowerCase().includes(query)));
   $('#roster-count').textContent=`${list.length}명`;
-  $('#roster').innerHTML=list.map(m=>`<div class="mate-card ${selected===m.id?'selected':''} ${placed.has(m.id)?'placed':''}">
+  $('#roster').innerHTML=list.map(m=>`<div class="mate-card ${placed.has(m.id)?'placed':''}">
     <span class="monogram ${m.type==='전투'?'combat':m.type==='교역'?'trade':''}">${escape(m.name.slice(0,1))}</span>
-    <button class="mate-info text-button" style="text-decoration:none;text-align:left" data-select="${m.id}" aria-label="${escape(m.name)} 배치 선택"><div class="mate-name"><span class="grade">${grade(m.grade)}</span>${escape(m.name)}</div><div class="mate-meta">${escape(m.type)} · ${escape(m.job)}${placed.has(m.id)?' · 승선':''}</div></button>
+    <button class="mate-info text-button" style="text-decoration:none;text-align:left" data-select="${m.id}" ${state.locked.includes(m.id)?'disabled':''} aria-label="${escape(m.name)} 배치 선택"><div class="mate-name"><span class="grade">${grade(m.grade)}</span>${escape(m.name)}</div><div class="mate-meta">${escape(m.type)} · ${escape(m.job)}${state.locked.includes(m.id)?' · 잠금':placed.has(m.id)?' · 승선':''}</div></button>
     <button class="detail-button" data-detail="${m.id}" aria-label="${escape(m.name)} 상세">ⓘ</button></div>`).join('')||'<div class="empty-roster">조건에 맞는 항해사가 없어요.</div>';
 }
 function renderShips(summary){
@@ -68,20 +85,23 @@ function renderShips(summary){
 }
 function renderTargets(summary){
   const rows=summary.targets.map((t,i)=>{
-  const a=data.abilityById.get(t.ability);return `<div class="target ${t.actual>=t.level?'target-met':''}"><div class="target-head"><span>${escape(a.name)}</span><button data-delete-target="${i}" aria-label="${escape(a.name)} 목표 삭제">×</button></div><div class="target-meta"><span>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · ${a.kind==='skill'?'기술':escape(a.category)}</span><strong>${t.actual} / ${t.level}${t.actual>=t.level?' ✓':''}</strong></div><div class="progress"><i style="width:${Math.min(100,t.actual/t.level*100)}%"></i></div></div>`;
+  const a=data.abilityById.get(t.ability);return `<div class="target ${t.actual>=t.level?'target-met':''}"><div class="target-head"><span>${escape(a.name)}</span><button data-delete-target="${i}" aria-label="${escape(a.name)} 목표 삭제">×</button></div><div class="target-meta"><span>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · ${a.kind==='skill'?'기술':escape(a.category)}</span><strong>현재 ${t.actual}${t.actual>=t.level?' · 달성':` · ${t.level-t.actual} 부족`}</strong></div><label class="target-edit">목표 레벨 <input type="number" min="1" max="10" value="${t.level}" data-target-level="${i}" aria-label="${escape(a.name)} ${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} 목표 레벨"></label><div class="progress"><i style="width:${Math.min(100,t.actual/t.level*100)}%"></i></div></div>`;
   });
   const groups=[{name:'선단 효과',test:t=>t.scope==='fleet'},...Array.from({length:state.shipCount},(_,s)=>[{name:`선박 ${s+1} · 전투 효과`,test:t=>t.scope===s&&data.abilityById.get(t.ability).kind==='effect'},{name:`선박 ${s+1} · 해전 기술`,test:t=>t.scope===s&&data.abilityById.get(t.ability).kind==='skill'}]).flat()];
   $('#targets').innerHTML=groups.map(g=>{const content=summary.targets.map((t,i)=>g.test(t)?rows[i]:'').join('');return content?`<section class="target-group"><h3>${g.name}</h3>${content}</section>`:'';}).join('')||'<div class="empty-targets">등록된 목표가 없습니다.</div>';
-  $('#solve').disabled=!state.targets.length||!!worker;
+  $('#solve').disabled=!state.targets.length||!!worker||(state.ownedOnly&&!state.owned.length);
+  $('#solve-readiness').textContent=!state.targets.length?'선단 효과·선박 효과·해전 기술 중 목표를 추가하세요.':state.ownedOnly&&!state.owned.length?'보유 항해사를 등록하거나 보유 제한을 해제하세요.':`${state.targets.length}개 목표 · 필수 ${state.required.length}명 · 잠금 ${state.locked.length}명`;
 }
 function render(){
   const summary=summarize(state,data);
+  $('#undo').disabled=!history.length||!!worker;
+  $('#candidate-summary').textContent=state.ownedOnly?`보유 ${state.owned.length}명 중에서 조합합니다.`:`미보유를 포함한 전체 ${data.mates.length}명 중에서 조합합니다.`;
   $('#owned-count').textContent=`${state.owned.length}명`;
   $('#required-list').innerHTML=`<div class="panel-title"><h3>필수 항해사 <span class="count">${state.required.length}명</span></h3><button id="pick-required" class="text-button">선택·변경</button></div>${state.required.map(id=>`<button class="required-chip" data-unrequire="${id}" aria-label="${escape(data.mateById.get(id).name)} 필수 해제">${escape(data.mateById.get(id).name)} ×</button>`).join('')||'<p class="small hint">지정된 항해사가 없습니다.</p>'}`;
   $('#placed-count').textContent=summary.placed;$('#achieved-count').textContent=`${summary.achieved} / ${state.targets.length}`;
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
   $('#stat-priority').value=state.statPriority;$('#budget').value=state.budget;
-  $('#selected-name').textContent=selected?`${data.mateById.get(selected).name} · 배치할 선실을 선택하세요`:'배치할 항해사를 선택하세요';
+  $('#selected-name').textContent='빈 선실을 눌러 항해사를 배치하세요';
   renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
 }
 function filterAbilities(){
@@ -117,15 +137,14 @@ function showMate(id){
 }
 function configureMate(){const mate=data.mateById.get(detailMate);if(!state.configs[detailMate])state.configs[detailMate]=configuration(mate,state);return state.configs[detailMate];}
 function busy(value){document.body.classList.toggle('busy',value);$('#stop').hidden=!value;$('#solve').hidden=value;
-  for(const id of ['export','import','about','stats-open','budget','clear','ship-count','owned-only','stat-priority','manage-owned'])$('#'+id).disabled=value;
+  for(const id of ['export','import','about','stats-open','budget','clear','ship-count','owned-only','stat-priority','manage-owned','undo'])$('#'+id).disabled=value;
 }
-function resultText(r,stopped=false){const summary=summarize(r.state,data);const remaining=summary.targets.filter(t=>t.actual<t.level);
-  const mandatory=structuredClone(r.state);mandatory.ships=mandatory.ships.map(row=>row.map(id=>state.required.includes(id)?id:null));
-  const contribution=summarize(mandatory,data).targets;
-  return `${stopped?'중지됨':'탐색 완료'} · ${summary.achieved}/${state.targets.length}개 목표 달성 · ${summary.placed}명 · 필수 ${state.required.length}명 포함. ${state.required.length?`필수 항해사 기여: ${contribution.map(t=>`${data.abilityById.get(t.ability).name} ${t.actual}/${t.level}`).join(', ')}. `:''}${remaining.length?`부족: ${remaining.map(t=>`${data.abilityById.get(t.ability).name} ${t.level-t.actual}`).join(', ')}. `:''}탐색한 조합 중 가장 좋은 결과이며 최적해 보장은 아니에요.`;
+function resultText(r,stopped=false){
+  const summary=summarize(r.state,data);
+  return `${stopped?'탐색 중지':'탐색 완료'} · ${summary.achieved}/${state.targets.length}개 목표 달성. 아래에서 현재 배치와 비교한 뒤 적용하세요. 제한 시간 안에 찾은 결과이며 최적해를 보장하지 않습니다.`;
 }
-function finish(result,stopped=false){if(worker)worker.terminate();worker=null;busy(false);
-  if(result){proposed=result;$('#solve-status').textContent=resultText(result,stopped);$('#apply-result').hidden=false;$('#dismiss-result').hidden=false;}
+function finish(result,stopped=false){if(worker)worker.terminate();worker=null;busy(false);$('#undo').disabled=!history.length;
+  if(result){proposed=result;renderPreview(result);$('#solve-status').textContent=resultText(result,stopped);$('#apply-result').hidden=false;$('#dismiss-result').hidden=false;}
   else $('#solve-status').textContent='탐색을 중지했어요. 현재 배치를 유지해요.';
 }
 async function init(){
@@ -133,12 +152,18 @@ async function init(){
     const response=await fetch('./catalog.json');if(!response.ok)throw Error('항해사 데이터를 불러오지 못했어요. 새로고침해 주세요.');
     catalog=await response.json();data=indexCatalog(catalog);
     try{const saved=localStorage.getItem(KEY);if(saved)state=validateState(JSON.parse(saved),data);}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
+    lastSaved=structuredClone(state);
     data.mates.sort((a,b)=>['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
     for(const name of Object.keys(data.mates[0].stats))$('#stat-priority').insertAdjacentHTML('beforeend',`<option>${escape(name)}</option>`);
     $('#loading').hidden=true;$('#workspace').hidden=false;updateScope();filterAbilities();render();renderPage();
   }catch(error){$('#loading').textContent=error.message;return;}
   for(const id of ['search','type-filter','grade-filter'])$('#'+id).addEventListener('input',renderRoster);
-  window.addEventListener('hashchange',renderPage);
+  window.addEventListener('hashchange',()=>{if($('#roster-dialog').open)$('#roster-dialog').close();renderPage();});
+  $('#undo').onclick=()=>{if(worker||!history.length)return;state=history.pop();lastSaved=structuredClone(state);clearProposal();updateScope();save();render();notice('직전 변경을 되돌렸습니다.');};
+  $('#picker-close').onclick=()=>$('#roster-dialog').close();
+  $('#roster-dialog').addEventListener('close',()=>{pendingSlot=null;});
+  $('#collection-sort').oninput=renderCollection;
+  $('#collection-reset').onclick=()=>{for(const id of ['collection-search','collection-type','collection-grade'])$('#'+id).value='';collectionFilter='all';renderCollection();};
   const openCollection=()=>{location.hash='collection';};
   $('#manage-owned').onclick=openCollection;
   $('#collection-close').onclick=()=>{location.hash='planner';};
@@ -157,15 +182,18 @@ async function init(){
   $('#ability-search').addEventListener('input',filterAbilities);
   $('#owned-only').onchange=e=>{state.ownedOnly=e.target.checked;commit();};
   $('#stat-priority').onchange=e=>{state.statPriority=e.target.value;commit();};
-  $('#budget').onchange=e=>{state.budget=Number(e.target.value);save();};
+  $('#budget').onchange=e=>{state.budget=Number(e.target.value);commit();};
   $('#roster').onclick=e=>{if(worker)return;const detail=e.target.closest('[data-detail]');if(detail){showMate(detail.dataset.detail);return;}
-    const button=e.target.closest('[data-select]');if(button){selected=selected===button.dataset.select?null:button.dataset.select;render();}};
+    const button=e.target.closest('[data-select]');if(button&&pendingSlot){
+      const id=button.dataset.select,[s,c]=pendingSlot;
+      if(state.locked.includes(id)){notice('잠금한 항해사는 이동할 수 없습니다.');return;}
+      const previous=state.ships.flat().indexOf(id);if(previous>=0)state.ships[Math.floor(previous/11)][previous%11]=null;
+      state.ships[s][c]=id;$('#roster-dialog').close();notice('');commit();
+    }};
   $('#ships').onclick=e=>{if(worker)return;const lock=e.target.closest('[data-lock]');if(lock){const id=lock.dataset.lock;state.locked=state.locked.includes(id)?state.locked.filter(x=>x!==id):[...state.locked,id];commit();return;}
     const slot=e.target.closest('[data-slot]');if(!slot)return;const [s,c]=slot.dataset.slot.split(',').map(Number);const occupant=state.ships[s][c];
-    if(!selected){if(occupant)showMate(occupant);else notice('왼쪽 목록에서 항해사를 먼저 선택해 주세요.');return;}
-    if(state.locked.includes(selected)||state.locked.includes(occupant)){notice('잠금한 항해사는 잠금을 해제한 뒤 이동할 수 있어요.');return;}
-    const previous=state.ships.flat().indexOf(selected);if(previous>=0)state.ships[Math.floor(previous/11)][previous%11]=null;
-    state.ships[s][c]=selected;selected=null;notice('');commit();};
+    if(occupant)showMate(occupant);else openPicker(s,c);
+  };
   $('#ship-count').onchange=e=>{const count=Number(e.target.value);
     if(count<state.shipCount&&state.ships.slice(count).flat().some(Boolean)&&!confirm('줄어드는 선박의 배치를 해제할까요?')){e.target.value=state.shipCount;return;}
     state.shipCount=count;for(let i=count;i<7;i++)state.ships[i]=Array(11).fill(null);
@@ -175,6 +203,7 @@ async function init(){
     const level=Number($('#target-level').value);if(!Number.isInteger(level)||level<1||level>10)return;
     const scope=a.scope==='fleet'?'fleet':Number($('#target-scope').value);const old=state.targets.find(t=>t.ability===a.id&&t.scope===scope);
     if(old)old.level=level;else if(state.targets.length<40)state.targets.push({ability:a.id,scope,level});else notice('목표는 최대 40개까지 추가할 수 있어요.');commit();};
+  $('#targets').onchange=e=>{if(worker)return;const input=e.target.closest('[data-target-level]');if(!input)return;const level=Number(input.value);if(!Number.isInteger(level)||level<1||level>10){input.value=state.targets[Number(input.dataset.targetLevel)].level;return;}state.targets[Number(input.dataset.targetLevel)].level=level;commit();};
   $('#targets').onclick=e=>{if(worker)return;const b=e.target.closest('[data-delete-target]');if(b){state.targets.splice(Number(b.dataset.deleteTarget),1);commit();}};
   $('#detail-close').onclick=()=>$('#detail').close();
   $('#detail-content').onchange=e=>{if(!detailMate)return;
@@ -191,7 +220,7 @@ async function init(){
   $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯 또는 적은 배치 인원을 고려해요. 잠금한 항해사의 자리와 장착 효과는 유지해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
   $('#solve').onclick=()=>{
     if(!state.targets.length)return;if(state.ownedOnly&&!state.owned.length&&!state.locked.length){notice('보유 항해사를 선택하거나 보유 필터를 꺼 주세요.');return;}
-    proposed=null;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;notice('');busy(true);
+    clearProposal();notice('');busy(true);
     $('#solve-status').textContent='목표와 장착 칸 수에 맞는 조합을 찾고 있어요…';
     try{worker=new Worker(new URL('./worker.js',import.meta.url),{type:'module'});
       worker.onmessage=({data:r})=>{if(r.type==='error'){finish(null);notice(`계산을 완료하지 못했어요: ${r.message}`);return;}
@@ -202,12 +231,12 @@ async function init(){
   };
   $('#stop').onclick=()=>finish(proposed,true);
   $('#apply-result').onclick=()=>{if(proposed){state=validateState(proposed.state,data);commit();$('#solve-status').textContent='추천 배치를 적용했어요. 승선 항해사를 누르면 장착 효과를 확인할 수 있어요.';}};
-  $('#dismiss-result').onclick=()=>{proposed=null;$('#apply-result').hidden=true;$('#dismiss-result').hidden=true;$('#solve-status').textContent='현재 배치를 유지했어요.';};
+  $('#dismiss-result').onclick=()=>{clearProposal();$('#solve-status').textContent='현재 배치를 유지했어요.';};
   $('#export').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='hangro-fleet.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
   $('#import').onclick=()=>$('#file').click();
   $('#file').onchange=async e=>{const file=e.target.files[0];if(!file)return;
     try{if(file.size>2_000_000)throw Error('배치 파일이 너무 커요.');const imported=validateState(JSON.parse(await file.text()),data);
-      if(confirm('현재 배치를 파일의 내용으로 바꿀까요?')){state=imported;selected=null;updateScope();commit();notice('배치 파일을 불러왔어요.');}
+      if(confirm('현재 배치를 파일의 내용으로 바꿀까요?')){state=imported;updateScope();commit();notice('배치 파일을 불러왔어요.');}
     }catch(error){notice(`불러오기 실패: ${error.message}`);}finally{e.target.value='';}};
 }
 init();
