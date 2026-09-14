@@ -102,3 +102,14 @@ test('catalog includes both latest navigators with complete linked grants and LV
     assert.equal(grants.find(g=>defs.get(g.ability_id).name===effect).level,2);
   }
 });
+
+test('stat selection ranks full candidate fleets by selected stat while preserving the goal',()=>{
+  const mates=Array.from({length:13},(_,i)=>({...mate('m'+i,i===0?[grant('goal')]:[]),stats:{박물학:i+1,판매전략:13-i}}));
+  const data=indexCatalog({mates,abilities:[ability('goal')]});
+  const state=initialState();state.shipCount=1;state.targets=[{ability:'goal',scope:'fleet',level:1}];
+  state.statPriority='박물학';const science=run(state,data);const ids=science.ships.flat();
+  assert.equal(summarize(science,data).achieved,1);assert.ok(ids.includes('m0'));assert.ok(ids.includes('m12'));assert.ok(!ids.includes('m1'));assert.ok(!ids.includes('m2'));
+  assert.equal(summarize(science,data).stats.박물학,86);
+  state.statPriority='판매전략';const sales=run(state,data);assert.ok(!sales.ships.flat().includes('m12'));assert.equal(summarize(sales,data).stats.판매전략,88);
+  state.statPriority='';assert.equal(summarize(run(state,data),data).placed,1);
+});
