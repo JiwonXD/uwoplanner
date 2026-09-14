@@ -134,7 +134,7 @@ function showDialog(html){$('#detail-content').innerHTML=html;if(!$('#detail').o
 function showMate(id,editEquipment=false){
   const m=data.mateById.get(id);if(!m)return;detailMate=id;const cfg=configuration(m,state),choices=candidates(m);
   showDialog(`<div class="eyebrow">NAVIGATOR</div><h2>${escape(m.name)}</h2><p class="small">${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</p>
-    <div class="dialog-tools"><span>${state.owned.includes(id)?'보유':'미보유'}${state.required.includes(id)?' · 필수 포함':''}</span><label><input type="checkbox" id="mate-transcended" ${cfg.transcended?'checked':''}> 3차 초월 완료</label></div>
+    <div class="dialog-tools">${editEquipment?`<label><input type="checkbox" id="mate-owned" aria-label="${escape(m.name)} 보유 항해사" ${state.owned.includes(id)?'checked':''}> <span id="mate-owned-status">${state.owned.includes(id)?'보유':'미보유'}</span></label>`:`<span>${state.owned.includes(id)?'보유':'미보유'}</span>`}<span id="mate-required-status" ${state.required.includes(id)?'':'hidden'}>필수 포함</span><label><input type="checkbox" id="mate-transcended" ${cfg.transcended?'checked':''}> 3차 초월 완료</label></div>
     <h3>스탯</h3>${statsHtml(m.stats)}<p class="small">원본 수치 기준 · 성장·장비 보정 미적용</p>
     ${editEquipment?`<h3>장착 효과 <span id="effect-count">${cfg.effects.length}</span> / ${slotLimit(m)}</h3><p class="small">현재 배치에 적용할 효과를 선택하세요. 자동 맞춤은 이 선택과 관계없이 전체 효과에서 조합합니다.</p>`:'<h3>보유 효과</h3>'}
     <div>${choices.map(g=>{const a=data.abilityById.get(g.ability);const content=`<span>${escape(a?.name)} <b>Lv.${g.level}</b></span><small>${labels[g.origin]||''}</small>`;return editEquipment?`<label class="effect-item"><input type="checkbox" data-equip="${g.ability}" ${cfg.effects.includes(g.ability)?'checked':''}>${content}</label>`:`<div class="effect-item">${content}</div>`;}).join('')}</div>
@@ -227,6 +227,12 @@ async function init(){
   $('#targets').onclick=e=>{if(worker)return;const b=e.target.closest('[data-delete-target]');if(b){state.targets.splice(Number(b.dataset.deleteTarget),1);commit();}};
   $('#detail-close').onclick=()=>$('#detail').close();
   $('#detail-content').onchange=e=>{if(!detailMate)return;
+    if(e.target.id==='mate-owned'){
+      if(worker){e.target.checked=state.owned.includes(detailMate);return;}
+      setOwned(detailMate,e.target.checked);commit();
+      $('#mate-owned-status').textContent=e.target.checked?'보유':'미보유';
+      $('#mate-required-status').hidden=!state.required.includes(detailMate);return;
+    }
     if(e.target.id==='mate-transcended'){configureMate().transcended=e.target.checked;commit();}
     if(e.target.matches('[data-equip]')){const cfg=configureMate(),id=e.target.dataset.equip;const m=data.mateById.get(detailMate);
       if(e.target.checked&&cfg.effects.length>=slotLimit(m)){e.target.checked=false;notice(`장착 효과는 최대 ${slotLimit(m)}개예요. 다른 효과를 해제해 주세요.`);return;}
