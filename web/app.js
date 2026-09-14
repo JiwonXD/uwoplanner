@@ -69,7 +69,7 @@ function openPicker(s,c){
 function renderPreview(result){
   const before=summarize(state,data),after=summarize(result.state,data);
   $('#result-preview').hidden=false;
-  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p>${state.statPriority?`<p class="stat-comparison"><strong>${escape(state.statPriority)} 선단 합계</strong><br>${(before.stats[state.statPriority]||0).toLocaleString()} → ${(after.stats[state.statPriority]||0).toLocaleString()}</p>`:''}<div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
+  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p>${state.statPriority?`<p class="stat-comparison"><strong>${escape(state.statPriority)} 주스탯 항해사</strong><br>${before.primaryStatCounts[state.statPriority]||0}명 → ${after.primaryStatCounts[state.statPriority]||0}명</p>`:''}<div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
 }
 
 function statsHtml(stats){return `<div class="stats-grid">${STAT_GROUPS.flatMap(([,names])=>names).map(k=>`<div class="stat-cell">${escape(k)}<strong>${(stats[k]||0).toLocaleString()}</strong></div>`).join('')}</div>`;}
@@ -86,7 +86,7 @@ function renderRoster(){
 }
 function renderShips(summary){
   $('#ships').innerHTML=state.ships.slice(0,state.shipCount).map((row,s)=>`<article class="ship"><header class="ship-header"><div class="ship-title"><span class="ship-number">${String(s+1).padStart(2,'0')}</span><h3>선박 ${s+1}</h3></div><div class="ship-capacity"><small>${row.filter(Boolean).length} / ${cabinCount(state,s)}명</small><span class="capacity-steps"><button data-capacity-step="1" data-ship="${s}" aria-label="선박 ${s+1} 선실 늘리기" title="선실 늘리기" ${cabinCount(state,s)>=MAX_CABINS?'disabled':''}>▲</button><button data-capacity-step="-1" data-ship="${s}" aria-label="선박 ${s+1} 선실 줄이기" title="선실 줄이기" ${cabinCount(state,s)<=1?'disabled':''}>▼</button></span></div></header><div class="cabins">${row.slice(0,cabinCount(state,s)).map((id,c)=>{
-    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} 선실 ${c+1} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`＋ 선실 ${c+1}`}</button>${mate?`<button class="remove-cabin" data-remove-cabin="${id}" aria-label="${escape(mate.name)} 승선 해제" title="승선 해제">×</button>`:''}</div>`;
+    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} 선실 ${c+1} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`＋ 선실 ${c+1}`}</button>${mate?`<label class="cabin-required" title="${!state.owned.includes(id)?'상세보기에서 보유 항해사로 등록하면 필수 지정할 수 있습니다.':state.required.includes(id)?'필수 지정 해제':'자동 맞춤에 필수 포함'}"><input type="checkbox" data-cabin-required="${id}" aria-label="${escape(mate.name)} 필수 포함" ${state.required.includes(id)?'checked':''} ${!state.owned.includes(id)||worker?'disabled':''}></label><button class="remove-cabin" data-remove-cabin="${id}" aria-label="${escape(mate.name)} 승선 해제" title="승선 해제">×</button>`:''}</div>`;
   }).join('')}</div><div class="ship-footer">${summary.targets.filter(t=>t.scope===s).length}개 선박 목표 · ${row.filter(id=>state.required.includes(id)).length}명 필수</div></article>`).join('');
 }
 function renderTargets(summary){
@@ -106,7 +106,7 @@ function render(){
   $('#required-list').innerHTML=`<div class="panel-title"><h3>필수 항해사 <span class="count">${state.required.length}명</span></h3><button id="pick-required" class="text-button">선택·변경</button></div>${state.required.map(id=>`<button class="required-chip" data-unrequire="${id}" aria-label="${escape(data.mateById.get(id).name)} 필수 해제">${escape(data.mateById.get(id).name)} ×</button>`).join('')||'<p class="small hint">지정된 항해사가 없습니다.</p>'}`;
   $('#placed-count').textContent=summary.placed;$('#achieved-count').textContent=`${summary.achieved} / ${state.targets.length}`;
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
-  $('#stat-priority-help').textContent=state.statPriority?`목표를 우선 만족시키고, 탐색한 후보 중 ${state.statPriority} 선단 합계가 높은 조합을 추천합니다. 합계를 높이기 위해 빈 선실도 채울 수 있습니다.`:'목표를 만족하는 데 필요한 항해사 수를 줄입니다.';
+  $('#stat-priority-help').textContent=state.statPriority?`목표 달성을 우선하고, ${state.statPriority}이 주스탯인 항해사가 많은 조합을 추천합니다. 주스탯은 각 항해사의 가장 높은 스탯이며, 공동 1위도 포함합니다. 인원수가 같으면 조합 전체의 제독 → S → A → B → C 인원수를 차례로 비교합니다.`:'목표를 만족하는 데 필요한 항해사 수를 줄입니다.';
   $('#stat-priority').value=state.statPriority;
   $('#selected-name').textContent='빈 선실을 눌러 항해사를 배치하세요';
   renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
@@ -210,7 +210,14 @@ async function init(){
     }
     state.shipCapacities[ship]=count;commit();
   };
-  $('#ships').onclick=e=>{if(worker)return;const step=e.target.closest('[data-capacity-step]');if(step){const ship=Number(step.dataset.ship);changeCapacity(ship,cabinCount(state,ship)+Number(step.dataset.capacityStep));return;}const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
+  $('#ships').onchange=e=>{
+    const input=e.target.closest('[data-cabin-required]');if(!input)return;
+    const id=input.dataset.cabinRequired;
+    if(worker||!state.owned.includes(id)){input.checked=state.required.includes(id);return;}
+    toggleRequired(id);
+    document.querySelectorAll('[data-cabin-required]').forEach(el=>{if(el.dataset.cabinRequired===id)el.focus();});
+  };
+  $('#ships').onclick=e=>{if(worker||e.target.closest('.cabin-required'))return;const step=e.target.closest('[data-capacity-step]');if(step){const ship=Number(step.dataset.ship);changeCapacity(ship,cabinCount(state,ship)+Number(step.dataset.capacityStep));return;}const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
     const slot=e.target.closest('[data-slot]');if(!slot)return;const [s,c]=slot.dataset.slot.split(',').map(Number);const occupant=state.ships[s][c];
     if(occupant)showMate(occupant,true);else openPicker(s,c);
   };
@@ -241,7 +248,7 @@ async function init(){
   $('#detail-content').onclick=e=>{if(e.target.id==='remove-mate'){
     $('#detail').close();removeFromFleet(detailMate);}};
   $('#stats-open').onclick=()=>{detailMate=null;const summary=summarize(state,data);showDialog(`<h2>선단 스탯</h2><p class="small">승선한 항해사의 원본 스탯 단순 합계예요. 선박 보정·장비·태생·직업 직접 효과는 포함하지 않아요.</p><h3>전체</h3>${statsHtml(summary.stats)}${summary.shipStats.slice(0,state.shipCount).map((stats,i)=>`<h3>선박 ${i+1}</h3>${statsHtml(stats)}`).join('')}`);};
-  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯 또는 적은 배치 인원을 고려해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
+  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 선택한 스탯이 주스탯인 항해사 수 또는 적은 배치 인원을 고려해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 시간이 끝나면 찾은 결과를 검토하고 적용할 수 있어요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터를 추가한 642명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
   const startSearch=(more=false)=>{
     if(worker)return;
     const previous=more?proposed:null;

@@ -43,7 +43,9 @@ npm run dev
 배치 잠금은 해당 항해사의 위치와 장착 효과를 자동 탐색에서 고정한다.
 
 자동 맞춤은 여러 번의 탐욕 탐색과 불필요 인원 제거를 수행한다. 목표 부족분을 먼저 줄이고,
-선택한 스탯 합계 또는 적은 인원을 차순위로 평가한다. 최적해나 불가능 여부를 증명하지 않는다.
+선택한 스탯이 주스탯인 항해사 수 또는 적은 인원을 차순위로 평가한다.
+주스탯 인원수가 같으면 조합 전체의 제독(S+), S, A, B, C 인원수를 순서대로 비교하며 높은 등급 인원이 많은 조합을 우선한다. 이를 위해 남은 선실도 채울 수 있다.
+주스탯은 항해사별 가장 높은 수치의 스탯이며 공동 1위는 모두 포함한다. 수치가 없거나 모두 0이면 주스탯으로 세지 않는다. 최적해나 불가능 여부를 증명하지 않는다.
 현재 스탯은 원본 수치의 단순 합계이며 성장/장비/선박 보정은 포함하지 않는다.
 태생·직업 직접 수치 보너스는 효과 레벨 목표와 합산하지 않는다.
 
@@ -51,12 +53,23 @@ npm run dev
 
 1. 이 프로젝트를 배포할 GitHub 저장소에 올린다.
 2. 저장소 Settings → Pages → Build and deployment → Source를 **GitHub Actions**로 선택한다.
-3. `main` 또는 `master` 브랜치에 push하면 `.github/workflows/pages.yml`이 테스트·빌드·배포한다.
-4. Actions의 Deploy 작업에서 발급된 Pages URL을 확인한다.
+3. `dev`에서 수정한 뒤 push한다. `Check changes`가 테스트와 빌드만 실행한다.
+4. `dev` → `main` Pull Request를 생성한다. PR에서도 `Test and build` 검사가 실행된다.
+5. 검사를 통과한 PR을 **Create a merge commit**으로 병합한다. `dev` 브랜치는 삭제하지 않는다.
+6. 병합으로 `main`이 변경되면 `.github/workflows/pages.yml`이 테스트·빌드 후 운영 사이트에 자동 배포한다.
+
+배포 워크플로는 `main` push에만 실행된다. `dev` push나 PR 생성만으로 운영 사이트가 바뀌지 않는다.
+다음 작업을 시작하기 전 `git fetch origin` → `git switch dev` → `git merge origin/main`으로 병합 이력을 반영한다.
+
+Settings → Branches에서 `main` 보호 규칙을 설정한다.
+**Require a pull request before merging**, **Require status checks to pass before merging**를 켜고
+필수 검사로 **Test and build**를 선택한다. **Do not allow bypassing the above settings**도 켜서 관리자에게 적용한다.
+혼자 운영할 때는 다른 사람의 승인을 필수로 요구하지 않는다. 강제 push와 브랜치 삭제는 허용하지 않는다.
+이 보호 규칙은 저장소 설정에서 별도로 적용해야 하며, 워크플로 파일만으로 직접 push를 막지는 못한다.
 
 사용자 저장소의 `/uwoplanner/` 같은 하위 경로에서도 동작하도록 데이터·스크립트·Worker 경로를 상대 경로로 사용한다.
 저장소: https://github.com/JiwonXD/uwoplanner
-Pages 주소: https://jiwonxd.github.io/uwoplanner/
+Pages 주소: https://uwoplanner.com/
 배포 상태는 저장소 Actions의 `Deploy GitHub Pages` 작업에서 확인할 수 있다.
 데이터를 갱신한 뒤에는 빌드를 다시 수행한다. 공개 배포에는 `dist/`만 업로드하므로
 원본 수집 스크립트와 SQLite 파일은 웹 배포물에 포함되지 않는다.
