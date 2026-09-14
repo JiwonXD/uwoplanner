@@ -86,7 +86,7 @@ function renderRoster(){
 }
 function renderShips(summary){
   $('#ships').innerHTML=state.ships.slice(0,state.shipCount).map((row,s)=>`<article class="ship"><header class="ship-header"><div class="ship-title"><span class="ship-number">${String(s+1).padStart(2,'0')}</span><h3>선박 ${s+1}</h3></div><div class="ship-capacity"><small>${row.filter(Boolean).length} / ${cabinCount(state,s)}명</small><span class="capacity-steps"><button data-capacity-step="1" data-ship="${s}" aria-label="선박 ${s+1} 선실 늘리기" title="선실 늘리기" ${cabinCount(state,s)>=MAX_CABINS?'disabled':''}>▲</button><button data-capacity-step="-1" data-ship="${s}" aria-label="선박 ${s+1} 선실 줄이기" title="선실 줄이기" ${cabinCount(state,s)<=1?'disabled':''}>▼</button></span></div></header><div class="cabins">${row.slice(0,cabinCount(state,s)).map((id,c)=>{
-    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} 선실 ${c+1} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`＋ 선실 ${c+1}`}</button>${mate?`<button class="remove-cabin" data-remove-cabin="${id}" aria-label="${escape(mate.name)} 승선 해제" title="승선 해제">×</button>`:''}</div>`;
+    const mate=data.mateById.get(id);return `<div class="cabin ${mate?'filled':''}"><button class="slot-button" data-slot="${s},${c}" aria-label="선박 ${s+1} 선실 ${c+1} ${mate?escape(mate.name):'빈자리'}">${mate?`${escape(mate.name)}<span>${grade(mate.grade)} · ${escape(mate.type)}</span>`:`＋ 선실 ${c+1}`}</button>${mate?`<label class="cabin-required" title="${!state.owned.includes(id)?'상세보기에서 보유 항해사로 등록하면 필수 지정할 수 있습니다.':state.required.includes(id)?'필수 지정 해제':'자동 맞춤에 필수 포함'}"><input type="checkbox" data-cabin-required="${id}" aria-label="${escape(mate.name)} 필수 포함" ${state.required.includes(id)?'checked':''} ${!state.owned.includes(id)||worker?'disabled':''}></label><button class="remove-cabin" data-remove-cabin="${id}" aria-label="${escape(mate.name)} 승선 해제" title="승선 해제">×</button>`:''}</div>`;
   }).join('')}</div><div class="ship-footer">${summary.targets.filter(t=>t.scope===s).length}개 선박 목표 · ${row.filter(id=>state.required.includes(id)).length}명 필수</div></article>`).join('');
 }
 function renderTargets(summary){
@@ -210,7 +210,14 @@ async function init(){
     }
     state.shipCapacities[ship]=count;commit();
   };
-  $('#ships').onclick=e=>{if(worker)return;const step=e.target.closest('[data-capacity-step]');if(step){const ship=Number(step.dataset.ship);changeCapacity(ship,cabinCount(state,ship)+Number(step.dataset.capacityStep));return;}const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
+  $('#ships').onchange=e=>{
+    const input=e.target.closest('[data-cabin-required]');if(!input)return;
+    const id=input.dataset.cabinRequired;
+    if(worker||!state.owned.includes(id)){input.checked=state.required.includes(id);return;}
+    toggleRequired(id);
+    document.querySelectorAll('[data-cabin-required]').forEach(el=>{if(el.dataset.cabinRequired===id)el.focus();});
+  };
+  $('#ships').onclick=e=>{if(worker||e.target.closest('.cabin-required'))return;const step=e.target.closest('[data-capacity-step]');if(step){const ship=Number(step.dataset.ship);changeCapacity(ship,cabinCount(state,ship)+Number(step.dataset.capacityStep));return;}const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
     const slot=e.target.closest('[data-slot]');if(!slot)return;const [s,c]=slot.dataset.slot.split(',').map(Number);const occupant=state.ships[s][c];
     if(occupant)showMate(occupant,true);else openPicker(s,c);
   };

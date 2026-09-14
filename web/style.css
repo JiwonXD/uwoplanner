@@ -24,3 +24,9 @@
 .stats-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,auto);grid-auto-flow:column}.stat-cell{min-width:0}@media(max-width:720px){.stats-grid .stat-cell{flex-direction:column;gap:3px;padding:8px 5px;font-size:10px}.stats-grid .stat-cell strong{font-size:13px}}
 
 .search input:focus{outline:none}.search:focus-within{outline:2px solid #579585;outline-offset:2px}.search input{flex:1;width:0;min-width:0}.search span{flex-shrink:0}
+
+/* Required crew control stays separate from cabin details and removal. */
+.cabin-required{position:absolute;left:0;top:50%;transform:translateY(-50%);width:32px;height:40px;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.cabin-required input{width:16px;height:16px;min-height:16px;margin:0;padding:0;accent-color:var(--green);cursor:pointer}
+.cabin-required:has(input:disabled),.cabin-required input:disabled{cursor:not-allowed;opacity:.5}
+.cabin.filled .slot-button{padding-left:32px}
