@@ -52,7 +52,9 @@ npm run dev
 4. Actions의 Deploy 작업에서 발급된 Pages URL을 확인한다.
 
 사용자 저장소의 `/uwoplanner/` 같은 하위 경로에서도 동작하도록 데이터·스크립트·Worker 경로를 상대 경로로 사용한다.
-실제 저장소 연결 및 공개 배포는 아직 수행하지 않았다.
+저장소: https://github.com/JiwonXD/uwoplanner
+Pages 주소: https://jiwonxd.github.io/uwoplanner/
+배포 상태는 저장소 Actions의 `Deploy GitHub Pages` 작업에서 확인할 수 있다.
 데이터를 갱신한 뒤에는 빌드를 다시 수행한다. 공개 배포에는 `dist/`만 업로드하므로
 원본 수집 스크립트와 SQLite 파일은 웹 배포물에 포함되지 않는다.
 
