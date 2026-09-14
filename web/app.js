@@ -46,7 +46,7 @@ function renderPage(){
     else a.removeAttribute('aria-current');
   });
   if(collection)renderCollection();
-  document.title=collection?'항해사 목록 · 항로':'선단 배치 · 항로';
+  document.title='UWO planner';
 }
 function renderRequired(){
   const q=$('#required-search').value.trim().toLowerCase();
