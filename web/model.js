@@ -1,6 +1,9 @@
-export const EMPTY=()=>Array.from({length:7},()=>Array(11).fill(null));
+export const MAX_CABINS=11;
+export const EMPTY=()=>Array.from({length:7},()=>Array(MAX_CABINS).fill(null));
+export const cabinCount=(state,ship)=>state.shipCapacities?.[ship]??MAX_CABINS;
+export const fleetCapacity=state=>Array.from({length:state.shipCount},(_,s)=>cabinCount(state,s)).reduce((a,b)=>a+b,0);
 export const KEY='hangro-planner-v1';
-export function initialState(){return {version:1,ships:EMPTY(),shipCount:7,targets:[],owned:[],ownedOnly:false,
+export function initialState(){return {version:1,ships:EMPTY(),shipCapacities:Array(7).fill(MAX_CABINS),shipCount:7,targets:[],owned:[],ownedOnly:false,
   configs:{},locked:[],required:[],statPriority:'',budget:10000};}
 export function slotLimit(mate){return mate.grade==='S+'?6:5;}
 export function indexCatalog(data){return {...data, mateById:new Map(data.mates.map(m=>[m.id,m])),
@@ -23,7 +26,7 @@ export function activeGrants(mate,config){
 }
 export function summarize(state,data){
   const levels=new Map();const shipStats=Array.from({length:7},()=>({}));const stats={};let placed=0;
-  for(let s=0;s<state.shipCount;s++)for(const id of state.ships[s]){
+  for(let s=0;s<state.shipCount;s++)for(const id of state.ships[s].slice(0,cabinCount(state,s))){
     if(!id)continue;const mate=data.mateById.get(id);if(!mate)continue;placed++;
     for(const [name,value]of Object.entries(mate.stats)){stats[name]=(stats[name]||0)+value;shipStats[s][name]=(shipStats[s][name]||0)+value;}
     for(const g of activeGrants(mate,configuration(mate,state))){
@@ -39,10 +42,13 @@ export function validateState(value,data){
   if(!value||value.version!==1||!Array.isArray(value.ships)||value.ships.length!==7)throw Error('지원하지 않는 배치 파일입니다.');
   const clean=initialState();clean.shipCount=Number(value.shipCount);
   if(!Number.isInteger(clean.shipCount)||clean.shipCount<1||clean.shipCount>7)throw Error('선박 수가 올바르지 않습니다.');
+  if(value.shipCapacities!==undefined&&(!Array.isArray(value.shipCapacities)||value.shipCapacities.length!==7))throw Error('선박별 선실 수가 올바르지 않습니다.');
+  clean.shipCapacities=value.ships.map((row,s)=>value.shipCapacities?.[s]??row?.length);
+  if(clean.shipCapacities.some(n=>!Number.isInteger(n)||n<1||n>MAX_CABINS))throw Error('선실 수가 올바르지 않습니다.');
   const used=new Set();
   clean.ships=value.ships.map((row,s)=>{
-    if(!Array.isArray(row)||row.length!==11)throw Error('선실 수가 올바르지 않습니다.');
-    return row.map(id=>{if(id===null)return null;if(s>=clean.shipCount||!data.mateById.has(id)||used.has(id))throw Error('중복되거나 유효하지 않은 항해사 배치입니다.');used.add(id);return id;});
+    if(!Array.isArray(row)||row.length<1||row.length>MAX_CABINS)throw Error('선실 수가 올바르지 않습니다.');
+    return Array.from({length:MAX_CABINS},(_,c)=>{const id=c<row.length?row[c]:null;if(id===null)return null;if(c>=clean.shipCapacities[s]||s>=clean.shipCount||!data.mateById.has(id)||used.has(id))throw Error('중복되거나 유효하지 않은 항해사 배치입니다.');used.add(id);return id;});
   });
   clean.owned=[...new Set((Array.isArray(value.owned)?value.owned:[]).filter(id=>data.mateById.has(id)))];
   clean.ownedOnly=!!value.ownedOnly;

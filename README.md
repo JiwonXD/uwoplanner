@@ -68,3 +68,7 @@ Pages 주소: https://jiwonxd.github.io/uwoplanner/
 추가 원본은 `data/simulator/supplement.json`, 상세 출처·차이·누락은 `data/simulator/README.md` 참고.
 확인되지 않은 적용 범위와 정의 없는 항목은 목표 목록에서 제외한다.
 스탯 기준 및 기술 합산은 실제 게임 검증이 남아 있다.
+
+### 선박별 선실 정원
+
+각 선박의 선실 수는 기본 11개이며 1~최대값 범위에서 설정합니다. 최대값은 `web/model.js`의 `MAX_CABINS`에서 관리하며, 이 값을 올리면 화면과 자동 배치의 상한도 함께 변경됩니다. 기존 저장 파일의 선실 정원과 배치는 유지하고 내부 배열만 새 최대값까지 확장합니다.

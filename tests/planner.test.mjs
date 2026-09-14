@@ -113,3 +113,18 @@ test('stat selection ranks full candidate fleets by selected stat while preservi
   state.statPriority='판매전략';const sales=run(state,data);assert.ok(!sales.ships.flat().includes('m12'));assert.equal(summarize(sales,data).stats.판매전략,88);
   state.statPriority='';assert.equal(summarize(run(state,data),data).placed,1);
 });
+
+test('per-ship capacities constrain stat filling and ship-scoped targets',()=>{
+  const data=indexCatalog({mates:Array.from({length:8},(_,i)=>mate('m'+i,[grant('combat')])),abilities:[ability('combat','ship')]});
+  const state=initialState();state.shipCount=2;state.shipCapacities[0]=1;state.shipCapacities[1]=3;state.statPriority='박물학';state.targets=[{ability:'combat',scope:0,level:2},{ability:'combat',scope:1,level:3}];
+  const result=run(state,data);assert.equal(result.ships[0].filter(Boolean).length,1);assert.equal(result.ships[1].filter(Boolean).length,3);assert.ok(result.ships[0].slice(1).every(x=>x===null));assert.ok(result.ships[1].slice(3).every(x=>x===null));
+  assert.deepEqual(summarize(result,data).targets.map(t=>t.actual),[1,3]);assert.deepEqual(validateState(result,data).shipCapacities,state.shipCapacities);
+  state.required=['m0','m1','m2','m3','m4'];state.owned=state.required;assert.throws(()=>run(state,data),/선실/);
+});
+test('legacy saves retain eleven cabins and invalid capacity or hidden occupants are rejected',()=>{
+  const data=indexCatalog({mates:[mate('m',[])],abilities:[]});const old=initialState();delete old.shipCapacities;
+  assert.deepEqual(validateState(old,data).shipCapacities,Array(7).fill(11));
+  const state=initialState();state.shipCapacities[0]=9;state.ships[0][10]='m';assert.throws(()=>validateState(state,data),/항해사/);
+  state.ships[0][10]=null;state.shipCapacities[0]=12;assert.throws(()=>validateState(state,data),/선실/);
+  state.shipCapacities[0]=0;assert.throws(()=>validateState(state,data),/선실/);
+});

@@ -1,4 +1,4 @@
-import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY} from './model.js';
+import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity} from './model.js';
 // Time-bounded multi-start greedy search. Reports the best found arrangement;
 // does not claim a proof of global optimality or infeasibility.
 export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Math.random}={}){
@@ -7,9 +7,9 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
   const required=new Set(input.required||[]);
   if(input.ownedOnly&&[...locked].some(id=>!owned.has(id)))throw Error('잠금한 항해사 중 미보유 항해사가 있어요. 보유로 표시하거나 잠금을 해제해 주세요.');
   for(const id of required)if(!owned.has(id)||!data.mateById.has(id))throw Error('필수 항해사의 보유 정보를 확인해 주세요.');
-  if(new Set([...required,...locked]).size>input.shipCount*11)throw Error('필수·잠금 항해사가 선실 수보다 많아요. 선박 수를 늘리거나 필수 지정을 줄여 주세요.');
+  if(new Set([...required,...locked]).size>fleetCapacity(input))throw Error('필수·잠금 항해사가 선실 수보다 많아요. 선박 수를 늘리거나 필수 지정을 줄여 주세요.');
   const base=structuredClone(input);base.ships=EMPTY();
-  for(let s=0;s<input.shipCount;s++)for(let c=0;c<11;c++){
+  for(let s=0;s<input.shipCount;s++)for(let c=0;c<cabinCount(input,s);c++){
     const id=input.ships[s][c];if(id&&locked.has(id))base.ships[s][c]=id;
   }
   const stat=input.statPriority;const maxStat=Math.max(1,...pool.map(m=>m.stats[stat]||0));
@@ -42,7 +42,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     for(const rec of mandatory){
       let choice=null;
       for(let ship=0;ship<input.shipCount;ship++){
-        const cabin=trial.ships[ship].indexOf(null);if(cabin<0)continue;
+        const cabin=trial.ships[ship].slice(0,cabinCount(input,ship)).indexOf(null);if(cabin<0)continue;
         const option=optionFor(rec,ship,current,weights);
         if(!choice||option.gain>choice.option.gain)choice={ship,cabin,option};
       }
@@ -54,10 +54,10 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     }
     // Small random exclusions diversify combinations without ever dropping locks.
     const records=relevant.filter(r=>iterations===0||random()>.08);
-    for(let step=0;step<input.shipCount*11;step++){
+    for(let step=0;step<fleetCapacity(input);step++){
       if(performance.now()-started>=milliseconds)break;
       let chosen=null,bestGain=-1;
-      const empty=trial.ships.slice(0,input.shipCount).map(row=>row.indexOf(null));
+      const empty=trial.ships.slice(0,input.shipCount).map((row,s)=>row.slice(0,cabinCount(input,s)).indexOf(null));
       for(const rec of records){if(used.has(rec.mate.id))continue;
         for(let ship=0;ship<input.shipCount;ship++){if(empty[ship]<0)continue;
           const option=optionFor(rec,ship,current,weights);
@@ -72,7 +72,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       for(const g of activeGrants(mate,trial.configs[mate.id]))for(const i of abilityTargets.get(g.ability)||[]){if(targets[i].scope==='fleet'||targets[i].scope===ship)current[i]+=g.level;}
     }
     // Drop redundant occupants in count-minimizing mode, preserving all achieved levels.
-    if(!stat){for(let s=0;s<input.shipCount;s++)for(let c=10;c>=0;c--){
+    if(!stat){for(let s=0;s<input.shipCount;s++)for(let c=cabinCount(input,s)-1;c>=0;c--){
       const id=trial.ships[s][c];if(!id||locked.has(id)||required.has(id))continue;
       const before=objective(trial);trial.ships[s][c]=null;
       if(objective(trial).deficit>before.deficit+1e-8)trial.ships[s][c]=id;
