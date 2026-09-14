@@ -18,3 +18,5 @@
 .goal-entry{display:flex;align-items:center;gap:6px}.goal-entry #ability-search{flex:1;width:0;min-width:0}.goal-entry-level{display:flex;align-items:center;gap:3px;font-size:11px;flex-shrink:0}.goal-entry-level input{width:40px;padding:7px 2px;text-align:center;font-size:15px;font-weight:600;appearance:textfield;-moz-appearance:textfield}.goal-entry-level input::-webkit-inner-spin-button,.goal-entry-level input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.goal-entry .add-target{width:36px;min-width:36px;min-height:40px;padding:0;font-size:23px;flex-shrink:0}#target-added{margin-top:8px;min-height:21px}
 
 .ship-capacity{display:flex;gap:8px;align-items:center;font-size:11px}.ship-capacity select{padding:3px;min-height:30px;width:48px}.ship-header{gap:6px;flex-wrap:wrap}
+
+.capacity-steps{display:flex;flex-direction:column;gap:2px}.capacity-steps button{width:28px;min-height:20px;padding:0;border:0;background:transparent;font-size:10px;line-height:20px}.capacity-steps button:hover:not(:disabled){background:#e5ecdf}.capacity-steps button:disabled{opacity:.25}.ship-capacity{gap:5px}
