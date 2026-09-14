@@ -48,6 +48,12 @@ def main():
     if not assignment:
         raise ValueError("Unsupported public snapshot format")
     mates = json.loads(assignment[1])
+    supplement_path = OUT / "supplement.json"
+    supplement = json.loads(supplement_path.read_text(encoding="utf-8")) if supplement_path.exists() else None
+    supplemental_names = set()
+    if supplement:
+        supplemental_names = {m["name"] for m in supplement["mates"]}
+        mates = [m for m in mates if m["name"] not in supplemental_names] + supplement["mates"]
     assert len({m["name"] for m in mates}) == len(mates)
     excel = json.loads((ROOT / "data/navigators.json").read_text(encoding="utf-8"))
     game_rules = json.loads((ROOT / "data/game-rules.json").read_text(encoding="utf-8"))
@@ -88,7 +94,7 @@ def main():
                   "hire_condition": m.get("hireCondition") or extra.get("require"),
                   "innate": m.get("innate", []), "admiral_commands": m.get("admiralCommands", []),
                   "job_effects": tables["jobEffects"].get(m["job"], []),
-                  "supplementary_source": extra, "source": "public_baked_snapshot"}
+                  "supplementary_source": extra, "source": "public_live_supplement" if m["name"] in supplemental_names else "public_baked_snapshot"}
         navigators.append(record)
         previous = old.get(m["name"])
         if previous:
@@ -150,6 +156,10 @@ def main():
     for name, relative in [("data.js", "data.js"), ("mates-baked.js", "mates-baked.js"), ("core.js", "js/core.js"), ("calc.js", "js/calc.js"), ("app.js", "js/app.js")]:
         manifest["files"].append({"file": name, "url": BASE + relative + "?v=" + VERSION,
                                   "sha256": hashlib.sha256((RAW / name).read_bytes()).hexdigest()})
+    if supplement:
+        manifest["supplement"] = {k: v for k, v in supplement.items() if k != "mates"}
+        manifest["supplement"]["names"] = sorted(supplemental_names)
+        manifest["source_mode"] = "static_snapshot_with_public_live_supplement"
     payload = {"schema_version": 1, "source": manifest, "navigators": navigators,
                "abilities": list(definitions.values()), "grants": grants,
                "aliases": tables["effectAlias"], "jobs": tables["jobEffects"], "game_rules": game_rules,

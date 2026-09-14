@@ -5,8 +5,8 @@
     "source_url": "https://uwo-fleet-simulator.web.app/",
     "page_version": "260913_1137",
     "snapshot_generated_at_utc": "2026-09-02T11:11:00Z",
-    "imported_at_utc": "2026-09-14T12:57:31.846769+00:00",
-    "source_mode": "public_static_fallback_not_live_firestore",
+    "imported_at_utc": "2026-09-14T13:24:38.411299+00:00",
+    "source_mode": "static_snapshot_with_public_live_supplement",
     "files": [
       {
         "file": "data.js",
@@ -40,7 +40,16 @@
       "Reference simulator sums all owned effects, without active selection",
       "Skill/effect stacking rules are source implementation, not game verification",
       "Missing definitions and scope conflicts require review"
-    ]
+    ],
+    "supplement": {
+      "source_url": "https://firestore.googleapis.com/v1/projects/uwo-services-by-astraeus/databases/(default)/documents/mates/all",
+      "source_updated_at": "2026-09-09T04:19:15.028632Z",
+      "retrieved_at": "2026-09-14T13:23:47.276128+00:00",
+      "names": [
+        "멜라티",
+        "제임스 랭커스터"
+      ]
+    }
   },
   "navigators": [
     {
@@ -47079,6 +47088,124 @@
         "require": ""
       },
       "source": "public_baked_snapshot"
+    },
+    {
+      "id": "navigator_ecc44c398f8a1ce0812b",
+      "name": "멜라티",
+      "grade": "S",
+      "type": "교역",
+      "job": "방적상",
+      "stats": {
+        "심미학": 195,
+        "박물학": 162,
+        "백병술": 38,
+        "교환 전략": 152,
+        "포격술": 79,
+        "협상 전략": 156,
+        "구매 전략": 133,
+        "충파술": 105,
+        "판매 전략": 380,
+        "척후법": 185,
+        "보급법": 119,
+        "지원술": 65
+      },
+      "stat_basis": null,
+      "portrait_id": "",
+      "languages": [
+        {
+          "name": "네덜란드어",
+          "level": 5
+        },
+        {
+          "name": "자와어",
+          "level": 3
+        }
+      ],
+      "hire_condition": "패키지 구매",
+      "innate": [
+        {
+          "mode": "trade",
+          "name": "섬세한 손길",
+          "description": "직물 판매 할증이 0.2% 증가합니다.",
+          "target": "직물",
+          "category": "판매 할증",
+          "value": 0.2,
+          "unit": "percent"
+        }
+      ],
+      "admiral_commands": [],
+      "job_effects": [
+        {
+          "name": "섬유 구매 수량",
+          "value": 1,
+          "unit": "percent",
+          "scope": "trade"
+        },
+        {
+          "name": "직물 구매 수량",
+          "value": 1,
+          "unit": "percent",
+          "scope": "trade"
+        }
+      ],
+      "supplementary_source": {},
+      "source": "public_live_supplement"
+    },
+    {
+      "id": "navigator_f01228e7bc3fcd42b9e2",
+      "name": "제임스 랭커스터",
+      "grade": "S",
+      "type": "모험",
+      "job": "갑판장",
+      "stats": {
+        "심미학": 173,
+        "박물학": 158,
+        "백병술": 38,
+        "교환 전략": 116,
+        "포격술": 83,
+        "협상 전략": 180,
+        "구매 전략": 203,
+        "충파술": 58,
+        "판매 전략": 137,
+        "척후법": 406,
+        "보급법": 124,
+        "지원술": 108
+      },
+      "stat_basis": null,
+      "portrait_id": "",
+      "languages": [
+        {
+          "name": "영어",
+          "level": 5
+        },
+        {
+          "name": "자와어",
+          "level": 3
+        }
+      ],
+      "hire_condition": null,
+      "innate": [
+        {
+          "mode": "adventure",
+          "name": "레몬즙 한스푼",
+          "description": "육지, 마을 탐색 시 선원 생존 확률이 0.1% 증가합니다.육",
+          "target": "육지, 마을 탐색",
+          "category": "생존 확률 증가",
+          "value": 0.1,
+          "unit": "percent"
+        }
+      ],
+      "admiral_commands": [],
+      "job_effects": [
+        {
+          "name": "화재 해소 확률",
+          "value": 0.2,
+          "unit": "percent",
+          "scope": "adventure"
+        }
+      ],
+      "supplementary_source": {},
+      "source": "public_live_supplement"
     }
   ],
   "abilities": [
@@ -190330,6 +190457,370 @@
       "active": null,
       "activation_rule": "skill_available",
       "raw_text": "백병: 싸움 유발",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_1645fd69ae379e6f4f85",
+      "slot_index": 0,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "충파 공격력 증가",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_ca87cae38d2050c18b4b",
+      "slot_index": 1,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 거래 전문",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_d51d4bd0cb4b6b9cbc7b",
+      "slot_index": 2,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "바가지의 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_eea06c511fac39a93937",
+      "slot_index": 3,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "채집 공부",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_9e4ac30e2bcf0c3dbceb",
+      "slot_index": 4,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "섬유 거래 전문",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_c3b1c3d1f4bbfdcb0871",
+      "slot_index": 5,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 구매 할인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_b913e979c571c3a799dc",
+      "slot_index": 6,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "기회 포착",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_a5d5f77aff3e92bbe534",
+      "slot_index": 7,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 판매 할증 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_4201eeb74bcc87c3ed0b",
+      "slot_index": 8,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 판매 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_8aa74f39eaa21c54b69e",
+      "slot_index": 9,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 거래 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "effect_a683477efdd42fc73a68",
+      "slot_index": 12,
+      "kind": "effect",
+      "origin": "transcendence_3",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "third_transcendence_completed",
+      "raw_text": "직물 교환 우대",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "skill_d3061fbe258e0ef558bc",
+      "slot_index": 0,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 1,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "정화: 전투태세",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_ecc44c398f8a1ce0812b",
+      "ability_id": "skill_cc4f8bc0b8ea25e67343",
+      "slot_index": 1,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 50,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "행동 봉쇄 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_2e528cf0e722e1dc9e56",
+      "slot_index": 0,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 방어력 증가",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_4eb5e9f1897343a6413a",
+      "slot_index": 1,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "중재자",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_c3b1c3d1f4bbfdcb0871",
+      "slot_index": 2,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 구매 할인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_eea06c511fac39a93937",
+      "slot_index": 3,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "채집 공부",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_d81359c97c2d448939e2",
+      "slot_index": 4,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "싸움 해소",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_0eafc61f57a021156c98",
+      "slot_index": 5,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "관찰 공부",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_7e70abb0950c72260696",
+      "slot_index": 6,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "굳건한 마음",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_d37de8f3447492903189",
+      "slot_index": 7,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "탐사의 기본 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_0ba3fc571652fb2291de",
+      "slot_index": 8,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "해적 척결",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_8aa74f39eaa21c54b69e",
+      "slot_index": 9,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "직물 거래 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "effect_e43e37b472abddb41c66",
+      "slot_index": 12,
+      "kind": "effect",
+      "origin": "transcendence_3",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "third_transcendence_completed",
+      "raw_text": "전투적인 관찰 심화",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "skill_cc4f8bc0b8ea25e67343",
+      "slot_index": 0,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 1,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "행동 봉쇄",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_f01228e7bc3fcd42b9e2",
+      "ability_id": "skill_3f60c6e50475745a915f",
+      "slot_index": 1,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 50,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "공격력 증가 LV2",
       "alias_applied": false
     }
   ],

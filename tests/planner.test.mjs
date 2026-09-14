@@ -88,3 +88,17 @@ test('real source honors global slot limits and provides requested four effect t
   const placed=result.ships.flat().filter(Boolean);assert.equal(new Set(placed).size,placed.length);
   for(const id of placed)assert.ok(configuration(data.mateById.get(id),result).effects.length<=slotLimit(data.mateById.get(id)));
 });
+test('catalog includes both latest navigators with complete linked grants and LV2 values',async()=>{
+  const raw=JSON.parse(await readFile(new URL('../data/simulator/catalog.json',import.meta.url),'utf8'));
+  assert.equal(raw.navigators.length,642);
+  assert.equal(new Set(raw.navigators.map(n=>n.id)).size,642);
+  const defs=new Map(raw.abilities.map(a=>[a.id,a]));
+  for(const [name,job,effect,stat,value] of [['멜라티','방적상','직물 판매 할증','판매 전략',380],['제임스 랭커스터','갑판장','탐사의 기본','척후법',406]]){
+    const n=raw.navigators.find(n=>n.name===name);assert.ok(n);assert.equal(n.job,job);assert.equal(n.grade,'S');
+    assert.equal(Object.keys(n.stats).length,12);assert.equal(n.stats[stat],value);
+    const grants=raw.grants.filter(g=>g.navigator_id===n.id);
+    assert.equal(grants.filter(g=>g.kind==='effect').length,11);assert.equal(grants.filter(g=>g.kind==='skill').length,2);
+    assert.ok(grants.every(g=>defs.get(g.ability_id)?.definition_available));
+    assert.equal(grants.find(g=>defs.get(g.ability_id).name===effect).level,2);
+  }
+});

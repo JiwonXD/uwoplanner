@@ -1,17 +1,19 @@
 {
   "counts": {
-    "navigators": 640,
+    "navigators": 642,
     "effects_with_definitions": 526,
     "skills_with_definitions": 104,
-    "effect_grants": 6655,
-    "skill_grants": 1322
+    "effect_grants": 6677,
+    "skill_grants": 1326
   },
   "added_navigators": [
     "루이즈 드보주아외",
     "마진 루즈",
+    "멜라티",
     "발렌티나 모렐",
     "안토니오 말라테스타",
     "자코모 데캄파니아",
+    "제임스 랭커스터",
     "헬렌 라즈베리"
   ],
   "excel_only_navigators": [],

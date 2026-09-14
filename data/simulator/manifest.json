@@ -3,8 +3,8 @@
   "source_url": "https://uwo-fleet-simulator.web.app/",
   "page_version": "260913_1137",
   "snapshot_generated_at_utc": "2026-09-02T11:11:00Z",
-  "imported_at_utc": "2026-09-14T12:57:31.846769+00:00",
-  "source_mode": "public_static_fallback_not_live_firestore",
+  "imported_at_utc": "2026-09-14T13:24:38.411299+00:00",
+  "source_mode": "static_snapshot_with_public_live_supplement",
   "files": [
     {
       "file": "data.js",
@@ -38,5 +38,14 @@
     "Reference simulator sums all owned effects, without active selection",
     "Skill/effect stacking rules are source implementation, not game verification",
     "Missing definitions and scope conflicts require review"
-  ]
+  ],
+  "supplement": {
+    "source_url": "https://firestore.googleapis.com/v1/projects/uwo-services-by-astraeus/databases/(default)/documents/mates/all",
+    "source_updated_at": "2026-09-09T04:19:15.028632Z",
+    "retrieved_at": "2026-09-14T13:23:47.276128+00:00",
+    "names": [
+      "멜라티",
+      "제임스 랭커스터"
+    ]
+  }
 }

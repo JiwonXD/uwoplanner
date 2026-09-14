@@ -5,14 +5,15 @@ const out = new URL('dist/', root);
 await mkdir(out, { recursive: true });
 const files=['index.html','style.css','app.js','model.js','solver.js','worker.js','favicon.svg'];
 const sources=await Promise.all(files.map(file=>readFile(new URL(`web/${file}`,root),'utf8')));
-const revision=createHash('sha256').update(sources.join('\n')).digest('hex').slice(0,12);
+const catalogText=await readFile(new URL('data/simulator/catalog.json',root),'utf8');
+const revision=createHash('sha256').update(sources.join('\n')).update(catalogText).digest('hex').slice(0,12);
 for (let i=0;i<files.length;i++) {
   let content=sources[i];const file=files[i];
   if(file.endsWith('.js'))content=content.replace(/(['"])(\.\/[\w-]+\.(?:js|json))\1/g,(_,quote,path)=>`${quote}${path}?v=${revision}${quote}`);
   if(file==='index.html')content=content.replace(/((?:src|href)="\.\/[^"?]+\.(?:js|css))"/g,`$1?v=${revision}"`);
   await writeFile(new URL(file,out),content);
 }
-const catalog = JSON.parse(await readFile(new URL('data/simulator/catalog.json', root), 'utf8'));
+const catalog = JSON.parse(catalogText);
 const grants = new Map();
 for (const g of catalog.grants) {
   if (!grants.has(g.navigator_id)) grants.set(g.navigator_id, []);
@@ -20,7 +21,7 @@ for (const g of catalog.grants) {
     origin: g.origin, unlock: g.unlock_level, slot: g.slot_index });
 }
 const data = {
-  version: catalog.source.snapshot_generated_at_utc,
+  version: catalog.source.supplement?.source_updated_at || catalog.source.snapshot_generated_at_utc,
   rules: catalog.game_rules,
   mates: catalog.navigators.map(n => ({id:n.id, name:n.name, grade:n.grade, type:n.type,
     job:n.job, stats:n.stats, grants:grants.get(n.id) || []})),

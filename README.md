@@ -18,7 +18,7 @@ npm run dev
 
 ## 기능
 
-- 640명 항해사 검색, 타입·등급 필터, 상세 스탯·효과·기술 조회
+- 642명 항해사 검색, 타입·등급 필터, 상세 스탯·효과·기술 조회
 - 최대 7척 × 11명 수동 배치, 배치와 장착 효과 잠금
 - 일반 항해사 5개 / 제독 6개 효과 선택, 별도 3차 초월 효과 활성화
 - 선단 공통 및 선박별 목표 레벨 설정
@@ -64,6 +64,7 @@ Pages 주소: https://jiwonxd.github.io/uwoplanner/
 ## 출처 및 데이터
 
 항해사 데이터: [UWO Fleet Simulator by Astraeus](https://uwo-fleet-simulator.web.app/)의
-2026-09-02 공개 스냅샷. 상세 출처·차이·누락은 `data/simulator/README.md` 참고.
+2026-09-02 공개 스냅샷에 공개 실시간 데이터의 멜라티·제임스 랭커스터를 추가했다.
+추가 원본은 `data/simulator/supplement.json`, 상세 출처·차이·누락은 `data/simulator/README.md` 참고.
 확인되지 않은 적용 범위와 정의 없는 항목은 목표 목록에서 제외한다.
 스탯 기준 및 기술 합산은 실제 게임 검증이 남아 있다.
