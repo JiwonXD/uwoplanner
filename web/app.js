@@ -131,16 +131,16 @@ function updateScope(){
   $('#ability-search').placeholder=goalMode==='skill'?'기술 이름 검색':'효과 이름 검색';
 }
 function showDialog(html){$('#detail-content').innerHTML=html;if(!$('#detail').open)$('#detail').showModal();}
-function showMate(id){
+function showMate(id,editEquipment=false){
   const m=data.mateById.get(id);if(!m)return;detailMate=id;const cfg=configuration(m,state),choices=candidates(m);
   showDialog(`<div class="eyebrow">NAVIGATOR</div><h2>${escape(m.name)}</h2><p class="small">${grade(m.grade)} · ${escape(m.type)} · ${escape(m.job)}</p>
     <div class="dialog-tools"><span>${state.owned.includes(id)?'보유':'미보유'}${state.required.includes(id)?' · 필수 포함':''}</span><label><input type="checkbox" id="mate-transcended" ${cfg.transcended?'checked':''}> 3차 초월 완료</label></div>
     <h3>스탯</h3>${statsHtml(m.stats)}<p class="small">원본 수치 기준 · 성장·장비 보정 미적용</p>
-    <h3>장착 효과 <span id="effect-count">${cfg.effects.length}</span> / ${slotLimit(m)}</h3><p class="small">습득 레벨은 계산하지 않아요. 추천 효과에 맞춰 육성해 주세요.</p>
-    <div>${choices.map(g=>{const a=data.abilityById.get(g.ability);return `<label class="effect-item"><input type="checkbox" data-equip="${g.ability}" ${cfg.effects.includes(g.ability)?'checked':''}><span>${escape(a?.name)} <b>Lv.${g.level}</b></span><small>${labels[g.origin]||''}</small></label>`;}).join('')}</div>
+    ${editEquipment?`<h3>장착 효과 <span id="effect-count">${cfg.effects.length}</span> / ${slotLimit(m)}</h3><p class="small">현재 배치에 적용할 효과를 선택하세요. 자동 맞춤은 이 선택과 관계없이 전체 효과에서 조합합니다.</p>`:'<h3>보유 효과</h3>'}
+    <div>${choices.map(g=>{const a=data.abilityById.get(g.ability);const content=`<span>${escape(a?.name)} <b>Lv.${g.level}</b></span><small>${labels[g.origin]||''}</small>`;return editEquipment?`<label class="effect-item"><input type="checkbox" data-equip="${g.ability}" ${cfg.effects.includes(g.ability)?'checked':''}>${content}</label>`:`<div class="effect-item">${content}</div>`;}).join('')}</div>
     <h3>고정 3차 초월 효과</h3>${m.grants.filter(g=>g.origin==='transcendence_3').map(g=>`<p>${escape(data.abilityById.get(g.ability)?.name)} Lv.${g.level}</p>`).join('')||'<p class="small">등록된 효과가 없어요.</p>'}
     <h3>해전 기술</h3>${m.grants.filter(g=>g.kind==='skill').map(g=>`<p class="small">${escape(data.abilityById.get(g.ability)?.name)} · Lv.${g.level}</p>`).join('')}
-    ${state.ships.flat().includes(id)?'<button id="remove-mate" class="danger" style="margin-top:20px">승선 해제</button>':''}`);
+    ${editEquipment&&state.ships.flat().includes(id)?'<button id="remove-mate" class="danger" style="margin-top:20px">승선 해제</button>':''}`);
 }
 function configureMate(){const mate=data.mateById.get(detailMate);if(!state.configs[detailMate])state.configs[detailMate]=configuration(mate,state);return state.configs[detailMate];}
 function busy(value){document.body.classList.toggle('busy',value);$('#stop').hidden=!value;$('#solve').hidden=value;
@@ -212,7 +212,7 @@ async function init(){
   };
   $('#ships').onclick=e=>{if(worker)return;const step=e.target.closest('[data-capacity-step]');if(step){const ship=Number(step.dataset.ship);changeCapacity(ship,cabinCount(state,ship)+Number(step.dataset.capacityStep));return;}const remove=e.target.closest('[data-remove-cabin]');if(remove){removeFromFleet(remove.dataset.removeCabin);return;}
     const slot=e.target.closest('[data-slot]');if(!slot)return;const [s,c]=slot.dataset.slot.split(',').map(Number);const occupant=state.ships[s][c];
-    if(occupant)showMate(occupant);else openPicker(s,c);
+    if(occupant)showMate(occupant,true);else openPicker(s,c);
   };
   $('#ship-count').onchange=e=>{const count=Number(e.target.value);
     if(count<state.shipCount&&state.ships.slice(count).flat().some(Boolean)&&!confirm('줄어드는 선박의 배치를 해제할까요?')){e.target.value=state.shipCount;return;}
