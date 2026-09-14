@@ -2,6 +2,7 @@ import {KEY,EMPTY,initialState,indexCatalog,candidates,configuration,slotLimit,s
 const $=s=>document.querySelector(s);
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const grade=g=>g==='S+'?'제독':g;
+const STAT_GROUPS=[['모험',['박물학','심미학','척후법','보급법']],['교역',['구매 전략','판매 전략','협상 전략','교환 전략']],['전투',['포격술','충파술','지원술','백병술']]];
 const labels={job:'습득 효과',character:'습득 효과',potential:'잠재 후보',relationship:'인연',transcendence_3:'3차 초월'};
 let data,catalog,state=initialState(),worker=null,proposed=null,detailMate=null;
 let collectionFilter='all';
@@ -71,7 +72,7 @@ function renderPreview(result){
   $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p>${state.statPriority?`<p class="stat-comparison"><strong>${escape(state.statPriority)} 선단 합계</strong><br>${(before.stats[state.statPriority]||0).toLocaleString()} → ${(after.stats[state.statPriority]||0).toLocaleString()}</p>`:''}<div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${after.targets.map((t,i)=>`<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
 }
 
-function statsHtml(stats){return `<div class="stats-grid">${Object.entries(stats).map(([k,v])=>`<div class="stat-cell">${escape(k)}<strong>${v.toLocaleString()}</strong></div>`).join('')}</div>`;}
+function statsHtml(stats){return `<div class="stats-grid">${STAT_GROUPS.flatMap(([,names])=>names).map(k=>`<div class="stat-cell">${escape(k)}<strong>${(stats[k]||0).toLocaleString()}</strong></div>`).join('')}</div>`;}
 function renderRoster(){
   const query=$('#search').value.trim().toLowerCase();const type=$('#type-filter').value;const g=$('#grade-filter').value;
   const placed=new Set(state.ships.flat().filter(Boolean)),owned=new Set(state.owned);
@@ -160,11 +161,7 @@ async function init(){
     try{const saved=localStorage.getItem(KEY);if(saved)state=migrateLegacyLocks(validateState(JSON.parse(saved),data));}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
     lastSaved=structuredClone(state);
     data.mates.sort((a,b)=>['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
-    for(const [category,names] of [
-      ['모험',['박물학','심미학','척후법','보급법']],
-      ['교역',['구매 전략','판매 전략','협상 전략','교환 전략']],
-      ['전투',['포격술','충파술','지원술','백병술']],
-    ])$('#stat-priority').insertAdjacentHTML('beforeend',`<optgroup label="${category}">${names.map(name=>`<option>${escape(name)}</option>`).join('')}</optgroup>`);
+    for(const [category,names] of STAT_GROUPS)$('#stat-priority').insertAdjacentHTML('beforeend',`<optgroup label="${category}">${names.map(name=>`<option>${escape(name)}</option>`).join('')}</optgroup>`);
     $('#loading').hidden=true;$('#workspace').hidden=false;updateScope();filterAbilities();render();renderPage();
   }catch(error){$('#loading').textContent=error.message;return;}
   for(const id of ['search','type-filter','grade-filter'])$('#'+id).addEventListener('input',renderRoster);

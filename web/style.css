@@ -20,3 +20,5 @@
 .ship-capacity{display:flex;gap:8px;align-items:center;font-size:11px}.ship-capacity select{padding:3px;min-height:30px;width:48px}.ship-header{gap:6px;flex-wrap:wrap}
 
 .capacity-steps{display:flex;flex-direction:column;gap:2px}.capacity-steps button{width:28px;min-height:20px;padding:0;border:0;background:transparent;font-size:10px;line-height:20px}.capacity-steps button:hover:not(:disabled){background:#e5ecdf}.capacity-steps button:disabled{opacity:.25}.ship-capacity{gap:5px}
+
+.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(4,auto);grid-auto-flow:column}.stat-cell{min-width:0}@media(max-width:720px){.stats-grid .stat-cell{flex-direction:column;gap:3px;padding:8px 5px;font-size:10px}.stats-grid .stat-cell strong{font-size:13px}}
