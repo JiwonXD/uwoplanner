@@ -160,7 +160,11 @@ async function init(){
     try{const saved=localStorage.getItem(KEY);if(saved)state=migrateLegacyLocks(validateState(JSON.parse(saved),data));}catch{notice('저장된 배치를 읽지 못해 새 배치로 시작했어요.');}
     lastSaved=structuredClone(state);
     data.mates.sort((a,b)=>['S+','S','A','B','C'].indexOf(a.grade)-['S+','S','A','B','C'].indexOf(b.grade)||a.name.localeCompare(b.name,'ko'));
-    for(const name of Object.keys(data.mates[0].stats))$('#stat-priority').insertAdjacentHTML('beforeend',`<option>${escape(name)}</option>`);
+    for(const [category,names] of [
+      ['모험',['박물학','심미학','척후법','보급법']],
+      ['교역',['구매 전략','판매 전략','협상 전략','교환 전략']],
+      ['전투',['포격술','충파술','지원술','백병술']],
+    ])$('#stat-priority').insertAdjacentHTML('beforeend',`<optgroup label="${category}">${names.map(name=>`<option>${escape(name)}</option>`).join('')}</optgroup>`);
     $('#loading').hidden=true;$('#workspace').hidden=false;updateScope();filterAbilities();render();renderPage();
   }catch(error){$('#loading').textContent=error.message;return;}
   for(const id of ['search','type-filter','grade-filter'])$('#'+id).addEventListener('input',renderRoster);
