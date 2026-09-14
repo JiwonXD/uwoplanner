@@ -1,4 +1,4 @@
-import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity} from './model.js';
+import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,primaryStats} from './model.js';
 // Time-bounded multi-start greedy search. Reports the best found arrangement;
 // does not claim a proof of global optimality or infeasibility.
 export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Math.random}={}){
@@ -12,14 +12,15 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
   for(let s=0;s<input.shipCount;s++)for(let c=0;c<cabinCount(input,s);c++){
     const id=input.ships[s][c];if(id&&locked.has(id))base.ships[s][c]=id;
   }
-  const stat=input.statPriority;const maxStat=Math.max(1,...pool.map(m=>m.stats[stat]||0));
+  const stat=input.statPriority;
+  const primaryMates=new Set(pool.filter(m=>stat&&primaryStats(m).includes(stat)).map(m=>m.id));
   const abilityTargets=new Map();targets.forEach((t,i)=>{if(!abilityTargets.has(t.ability))abilityTargets.set(t.ability,[]);abilityTargets.get(t.ability).push(i);});
   const relevant=pool.map(m=>({mate:m,options:candidates(m),fixed:m.grants.filter(g=>g.kind==='skill'||(g.origin==='transcendence_3'&&configuration(m,input).transcended))}));
   function values(state){return summarize(state,data).targets.map(t=>t.actual);}
   function objective(state){const summary=summarize(state,data);return {deficit:summary.targets.reduce((n,t)=>n+Math.max(0,t.level-t.actual)/t.level,0),
-    stat:summary.stats[stat]||0,count:summary.placed,over:summary.targets.reduce((n,t)=>n+Math.max(0,t.actual-t.level),0),summary};}
+    primaryCount:summary.primaryStatCounts[stat]||0,count:summary.placed,over:summary.targets.reduce((n,t)=>n+Math.max(0,t.actual-t.level),0),summary};}
   function better(a,b){if(Math.abs(a.deficit-b.deficit)>1e-8)return a.deficit<b.deficit;
-    if(stat&&a.stat!==b.stat)return a.stat>b.stat;if(a.count!==b.count)return a.count<b.count;return a.over<b.over;}
+    if(stat&&a.primaryCount!==b.primaryCount)return a.primaryCount>b.primaryCount;if(a.count!==b.count)return a.count<b.count;return a.over<b.over;}
   let best=structuredClone(input),score=objective(best),iterations=0,lastProgress=0;
   // Existing occupants excluded by the owned filter cannot survive as the best result.
   if(input.ownedOnly&&input.ships.flat().some(id=>id&&!owned.has(id)&&!locked.has(id))){best=structuredClone(base);score=objective(best);}
@@ -61,7 +62,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       for(const rec of records){if(used.has(rec.mate.id))continue;
         for(let ship=0;ship<input.shipCount;ship++){if(empty[ship]<0)continue;
           const option=optionFor(rec,ship,current,weights);
-          const gain=option.gain+(stat?(rec.mate.stats[stat]||0)/maxStat*.0001:0);
+          const gain=option.gain+(primaryMates.has(rec.mate.id)?0.0001:0);
           if(gain>bestGain){chosen={rec,ship,cabin:empty[ship],option};bestGain=gain;}
         }
       }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {initialState,indexCatalog,configuration,activeGrants,slotLimit,summarize,validateState} from '../web/model.js';
+import {initialState,indexCatalog,configuration,activeGrants,slotLimit,summarize,validateState,primaryStats} from '../web/model.js';
 import {solve} from '../web/solver.js';
 const ability=(id,scope='fleet')=>({id,name:id,scope,kind:'effect',known:true,category:scope==='fleet'?'모험':'전투'});
 const grant=(ability,origin='job',level=1)=>({ability,origin,level,kind:'effect',unlock:70});
@@ -103,15 +103,34 @@ test('catalog includes both latest navigators with complete linked grants and LV
   }
 });
 
-test('stat selection ranks full candidate fleets by selected stat while preserving the goal',()=>{
+test('stat selection fills with matching primary stats while preserving the goal',()=>{
   const mates=Array.from({length:13},(_,i)=>({...mate('m'+i,i===0?[grant('goal')]:[]),stats:{박물학:i+1,판매전략:13-i}}));
   const data=indexCatalog({mates,abilities:[ability('goal')]});
   const state=initialState();state.shipCount=1;state.targets=[{ability:'goal',scope:'fleet',level:1}];
   state.statPriority='박물학';const science=run(state,data);const ids=science.ships.flat();
   assert.equal(summarize(science,data).achieved,1);assert.ok(ids.includes('m0'));assert.ok(ids.includes('m12'));assert.ok(!ids.includes('m1'));assert.ok(!ids.includes('m2'));
-  assert.equal(summarize(science,data).stats.박물학,86);
-  state.statPriority='판매전략';const sales=run(state,data);assert.ok(!sales.ships.flat().includes('m12'));assert.equal(summarize(sales,data).stats.판매전략,88);
+  assert.equal(summarize(science,data).primaryStatCounts.박물학,7);
+  assert.equal(summarize(science,data).placed,8);
+  state.statPriority='판매전략';const sales=run(state,data);assert.ok(!sales.ships.flat().includes('m12'));assert.equal(summarize(sales,data).primaryStatCounts.판매전략,7);assert.equal(summarize(sales,data).placed,7);
   state.statPriority='';assert.equal(summarize(run(state,data),data).placed,1);
+});
+
+test('primary-stat headcount beats absolute totals, including the existing fleet',()=>{
+  const high={...mate('high',[grant('goal')]),stats:{박물학:900,판매전략:1000}};
+  const specialists=['a','b'].map(id=>({...mate(id,[grant('goal')]),stats:{박물학:10,판매전략:1}}));
+  const data=indexCatalog({mates:[high,...specialists],abilities:[ability('goal')]});
+  const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.statPriority='박물학';state.targets=[{ability:'goal',scope:'fleet',level:2}];
+  state.ships[0][0]='high';state.ships[0][1]='a';
+  const result=run(state,data),summary=summarize(result,data);
+  assert.equal(summary.achieved,1);assert.equal(summary.primaryStatCounts.박물학,2);assert.equal(summary.stats.박물학,20);assert.ok(!result.ships.flat().includes('high'));
+  state.required=['high'];state.owned=['high','a'];state.ownedOnly=true;
+  const constrained=run(state,data);assert.equal(summarize(constrained,data).achieved,1);assert.equal(summarize(constrained,data).primaryStatCounts.박물학,1);assert.ok(constrained.ships.flat().includes('high'));assert.ok(!constrained.ships.flat().includes('b'));
+});
+
+test('primary stats include tied maxima but exclude missing and zero stats',()=>{
+  assert.deepEqual(primaryStats({stats:{박물학:20,판매전략:20,백병술:10}}),['박물학','판매전략']);
+  assert.deepEqual(primaryStats({stats:{박물학:0,판매전략:0}}),[]);
+  assert.deepEqual(primaryStats({}),[]);
 });
 
 test('per-ship capacities constrain stat filling and ship-scoped targets',()=>{

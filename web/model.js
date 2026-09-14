@@ -6,6 +6,11 @@ export const KEY='hangro-planner-v1';
 export function initialState(){return {version:1,ships:EMPTY(),shipCapacities:Array(7).fill(MAX_CABINS),shipCount:7,targets:[],owned:[],ownedOnly:false,
   configs:{},locked:[],required:[],statPriority:'',budget:10000};}
 export function slotLimit(mate){return mate.grade==='S+'?6:5;}
+export function primaryStats(mate){
+  const entries=Object.entries(mate.stats||{}).filter(([,value])=>Number.isFinite(value)&&value>0);
+  const highest=Math.max(0,...entries.map(([,value])=>value));
+  return entries.filter(([,value])=>value===highest).map(([name])=>name);
+}
 export function indexCatalog(data){return {...data, mateById:new Map(data.mates.map(m=>[m.id,m])),
   abilityById:new Map(data.abilities.map(a=>[a.id,a]))};}
 export function candidates(mate){
@@ -25,9 +30,10 @@ export function activeGrants(mate,config){
     ...mate.grants.filter(g=>g.kind==='skill'||(g.origin==='transcendence_3'&&config.transcended))];
 }
 export function summarize(state,data){
-  const levels=new Map();const shipStats=Array.from({length:7},()=>({}));const stats={};let placed=0;
+  const levels=new Map();const shipStats=Array.from({length:7},()=>({}));const stats={},primaryStatCounts={};let placed=0;
   for(let s=0;s<state.shipCount;s++)for(const id of state.ships[s].slice(0,cabinCount(state,s))){
     if(!id)continue;const mate=data.mateById.get(id);if(!mate)continue;placed++;
+    for(const name of primaryStats(mate))primaryStatCounts[name]=(primaryStatCounts[name]||0)+1;
     for(const [name,value]of Object.entries(mate.stats)){stats[name]=(stats[name]||0)+value;shipStats[s][name]=(shipStats[s][name]||0)+value;}
     for(const g of activeGrants(mate,configuration(mate,state))){
       const ability=data.abilityById.get(g.ability);if(!ability?.scope)continue;
@@ -36,7 +42,7 @@ export function summarize(state,data){
     }
   }
   const targets=state.targets.map(t=>({...t,actual:levels.get(`${t.ability}:${t.scope}`)||0}));
-  return {levels,stats,shipStats,placed,targets,achieved:targets.filter(t=>t.actual>=t.level).length};
+  return {levels,stats,shipStats,primaryStatCounts,placed,targets,achieved:targets.filter(t=>t.actual>=t.level).length};
 }
 export function validateState(value,data){
   if(!value||value.version!==1||!Array.isArray(value.ships)||value.ships.length!==7)throw Error('지원하지 않는 배치 파일입니다.');
