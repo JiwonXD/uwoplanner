@@ -186,6 +186,10 @@ async function init(){
   $('#required-open-owned').onclick=()=>{$('#required-dialog').close();openCollection();};
   document.querySelectorAll('[data-goal-mode]').forEach(b=>b.onclick=()=>{if(worker)return;goalMode=b.dataset.goalMode;document.querySelectorAll('[data-goal-mode]').forEach(el=>el.setAttribute('aria-pressed',String(el===b)));$('#ability-search').value='';updateScope();filterAbilities();});
   $('#ability-search').addEventListener('input',filterAbilities);
+  $('#ability-select').addEventListener('dblclick',e=>{
+    if(worker||!e.target.closest('option'))return;
+    $('#target-form').requestSubmit();
+  });
   $('#owned-only').onchange=e=>{state.ownedOnly=e.target.checked;commit();};
   $('#stat-priority').onchange=e=>{state.statPriority=e.target.value;commit();};
   $('#budget').onchange=e=>{state.budget=Number(e.target.value);commit();};
