@@ -241,4 +241,19 @@ async function init(){
       if(confirm('현재 배치를 파일의 내용으로 바꿀까요?')){state=imported;updateScope();commit();notice('배치 파일을 불러왔어요.');}
     }catch(error){notice(`불러오기 실패: ${error.message}`);}finally{e.target.value='';}};
 }
+// Only dismiss when the press and release are both on the backdrop.
+document.querySelectorAll('dialog').forEach(dialog=>{
+  let pressedOutside=false;
+  const outside=e=>{
+    const rect=dialog.getBoundingClientRect();
+    return e.target===dialog&&(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom);
+  };
+  dialog.addEventListener('pointerdown',e=>{pressedOutside=e.button===0&&outside(e);});
+  dialog.addEventListener('click',e=>{
+    if(pressedOutside&&outside(e))dialog.close();
+    pressedOutside=false;
+  });
+  dialog.addEventListener('pointercancel',()=>{pressedOutside=false;});
+  dialog.addEventListener('close',()=>{pressedOutside=false;});
+});
 init();
