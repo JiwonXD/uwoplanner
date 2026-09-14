@@ -1,4 +1,4 @@
-import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,primaryStats} from './model.js';
+import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,primaryStats,GRADE_ORDER} from './model.js';
 // Time-bounded multi-start greedy search. Reports the best found arrangement;
 // does not claim a proof of global optimality or infeasibility.
 export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Math.random}={}){
@@ -14,13 +14,18 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
   }
   const stat=input.statPriority;
   const primaryMates=new Set(pool.filter(m=>stat&&primaryStats(m).includes(stat)).map(m=>m.id));
+  const gradeRank=mate=>{const rank=GRADE_ORDER.indexOf(mate.grade);return rank<0?GRADE_ORDER.length:rank;};
   const abilityTargets=new Map();targets.forEach((t,i)=>{if(!abilityTargets.has(t.ability))abilityTargets.set(t.ability,[]);abilityTargets.get(t.ability).push(i);});
   const relevant=pool.map(m=>({mate:m,options:candidates(m),fixed:m.grants.filter(g=>g.kind==='skill'||(g.origin==='transcendence_3'&&configuration(m,input).transcended))}));
   function values(state){return summarize(state,data).targets.map(t=>t.actual);}
   function objective(state){const summary=summarize(state,data);return {deficit:summary.targets.reduce((n,t)=>n+Math.max(0,t.level-t.actual)/t.level,0),
-    primaryCount:summary.primaryStatCounts[stat]||0,count:summary.placed,over:summary.targets.reduce((n,t)=>n+Math.max(0,t.actual-t.level),0),summary};}
+    primaryCount:summary.primaryStatCounts[stat]||0,grades:GRADE_ORDER.map(g=>summary.gradeCounts[g]||0),count:summary.placed,over:summary.targets.reduce((n,t)=>n+Math.max(0,t.actual-t.level),0),summary};}
   function better(a,b){if(Math.abs(a.deficit-b.deficit)>1e-8)return a.deficit<b.deficit;
-    if(stat&&a.primaryCount!==b.primaryCount)return a.primaryCount>b.primaryCount;if(a.count!==b.count)return a.count<b.count;return a.over<b.over;}
+    if(stat){
+      if(a.primaryCount!==b.primaryCount)return a.primaryCount>b.primaryCount;
+      for(let i=0;i<GRADE_ORDER.length;i++)if(a.grades[i]!==b.grades[i])return a.grades[i]>b.grades[i];
+    }
+    if(a.count!==b.count)return a.count<b.count;return a.over<b.over;}
   let best=structuredClone(input),score=objective(best),iterations=0,lastProgress=0;
   // Existing occupants excluded by the owned filter cannot survive as the best result.
   if(input.ownedOnly&&input.ships.flat().some(id=>id&&!owned.has(id)&&!locked.has(id))){best=structuredClone(base);score=objective(best);}
@@ -63,10 +68,10 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
         for(let ship=0;ship<input.shipCount;ship++){if(empty[ship]<0)continue;
           const option=optionFor(rec,ship,current,weights);
           const gain=option.gain+(primaryMates.has(rec.mate.id)?0.0001:0);
-          if(gain>bestGain){chosen={rec,ship,cabin:empty[ship],option};bestGain=gain;}
+          if(gain>bestGain||(stat&&gain===bestGain&&chosen&&gradeRank(rec.mate)<gradeRank(chosen.rec.mate))){chosen={rec,ship,cabin:empty[ship],option};bestGain=gain;}
         }
       }
-      if(!chosen||bestGain<=0)break;
+      if(!chosen||(bestGain<=0&&(!stat||gradeRank(chosen.rec.mate)===GRADE_ORDER.length)))break;
       const {rec,ship,cabin,option}=chosen;const mate=rec.mate;
       trial.ships[ship][cabin]=mate.id;used.add(mate.id);
       trial.configs[mate.id]={effects:option.effects,transcended:configuration(mate,input).transcended};

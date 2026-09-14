@@ -1,4 +1,5 @@
 export const MAX_CABINS=11;
+export const GRADE_ORDER=['S+','S','A','B','C'];
 export const EMPTY=()=>Array.from({length:7},()=>Array(MAX_CABINS).fill(null));
 export const cabinCount=(state,ship)=>state.shipCapacities?.[ship]??MAX_CABINS;
 export const fleetCapacity=state=>Array.from({length:state.shipCount},(_,s)=>cabinCount(state,s)).reduce((a,b)=>a+b,0);
@@ -30,9 +31,10 @@ export function activeGrants(mate,config){
     ...mate.grants.filter(g=>g.kind==='skill'||(g.origin==='transcendence_3'&&config.transcended))];
 }
 export function summarize(state,data){
-  const levels=new Map();const shipStats=Array.from({length:7},()=>({}));const stats={},primaryStatCounts={};let placed=0;
+  const levels=new Map();const shipStats=Array.from({length:7},()=>({}));const stats={},primaryStatCounts={},gradeCounts={};let placed=0;
   for(let s=0;s<state.shipCount;s++)for(const id of state.ships[s].slice(0,cabinCount(state,s))){
     if(!id)continue;const mate=data.mateById.get(id);if(!mate)continue;placed++;
+    gradeCounts[mate.grade]=(gradeCounts[mate.grade]||0)+1;
     for(const name of primaryStats(mate))primaryStatCounts[name]=(primaryStatCounts[name]||0)+1;
     for(const [name,value]of Object.entries(mate.stats)){stats[name]=(stats[name]||0)+value;shipStats[s][name]=(shipStats[s][name]||0)+value;}
     for(const g of activeGrants(mate,configuration(mate,state))){
@@ -42,7 +44,7 @@ export function summarize(state,data){
     }
   }
   const targets=state.targets.map(t=>({...t,actual:levels.get(`${t.ability}:${t.scope}`)||0}));
-  return {levels,stats,shipStats,primaryStatCounts,placed,targets,achieved:targets.filter(t=>t.actual>=t.level).length};
+  return {levels,stats,shipStats,primaryStatCounts,gradeCounts,placed,targets,achieved:targets.filter(t=>t.actual>=t.level).length};
 }
 export function validateState(value,data){
   if(!value||value.version!==1||!Array.isArray(value.ships)||value.ships.length!==7)throw Error('지원하지 않는 배치 파일입니다.');

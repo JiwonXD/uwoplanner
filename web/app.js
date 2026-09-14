@@ -106,7 +106,7 @@ function render(){
   $('#required-list').innerHTML=`<div class="panel-title"><h3>필수 항해사 <span class="count">${state.required.length}명</span></h3><button id="pick-required" class="text-button">선택·변경</button></div>${state.required.map(id=>`<button class="required-chip" data-unrequire="${id}" aria-label="${escape(data.mateById.get(id).name)} 필수 해제">${escape(data.mateById.get(id).name)} ×</button>`).join('')||'<p class="small hint">지정된 항해사가 없습니다.</p>'}`;
   $('#placed-count').textContent=summary.placed;$('#achieved-count').textContent=`${summary.achieved} / ${state.targets.length}`;
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
-  $('#stat-priority-help').textContent=state.statPriority?`목표 달성을 우선하고, ${state.statPriority}이 주스탯인 항해사가 많은 조합을 추천합니다. 주스탯은 각 항해사의 가장 높은 스탯이며, 공동 1위도 포함합니다.`:'목표를 만족하는 데 필요한 항해사 수를 줄입니다.';
+  $('#stat-priority-help').textContent=state.statPriority?`목표 달성을 우선하고, ${state.statPriority}이 주스탯인 항해사가 많은 조합을 추천합니다. 주스탯은 각 항해사의 가장 높은 스탯이며, 공동 1위도 포함합니다. 인원수가 같으면 조합 전체의 제독 → S → A → B → C 인원수를 차례로 비교합니다.`:'목표를 만족하는 데 필요한 항해사 수를 줄입니다.';
   $('#stat-priority').value=state.statPriority;
   $('#selected-name').textContent='빈 선실을 눌러 항해사를 배치하세요';
   renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
