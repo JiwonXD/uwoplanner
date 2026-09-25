@@ -1,4 +1,29 @@
 import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,primaryStats,GRADE_ORDER} from './model.js';
+// Reorder the selected crew without changing equipment or ship-target contributions.
+export function distributeFleet(state,data){
+  const result=structuredClone(state),locked=new Set(state.locked||[]);
+  const free=[],reserved=Array.from({length:state.shipCount},()=>[]),ranks=new Map();
+  const shipTargets=reserved.map((_,ship)=>new Set(state.targets.filter(t=>t.scope===ship).map(t=>t.ability)));
+  for(let ship=0;ship<state.shipCount;ship++)for(let cabin=0;cabin<cabinCount(state,ship);cabin++){
+    const id=state.ships[ship][cabin];if(!id||locked.has(id))continue;
+    const mate=data.mateById.get(id),grade=GRADE_ORDER.indexOf(mate.grade);
+    ranks.set(id,state.statPriority?[primaryStats(mate).includes(state.statPriority)?0:1,grade<0?GRADE_ORDER.length:grade]:[0,0]);
+    const needed=activeGrants(mate,configuration(mate,state)).some(g=>shipTargets[ship].has(g.ability));
+    (needed?reserved[ship]:free).push(id);result.ships[ship][cabin]=null;
+  }
+  const compare=(a,b)=>ranks.get(a)[0]-ranks.get(b)[0]||ranks.get(a)[1]-ranks.get(b)[1];
+  free.sort(compare);reserved.forEach(row=>row.sort(compare));
+  const maxCabins=Math.max(...Array.from({length:state.shipCount},(_,ship)=>cabinCount(state,ship)));
+  for(let cabin=0;cabin<maxCabins;cabin++)for(let ship=0;ship<state.shipCount;ship++){
+    const capacity=cabinCount(state,ship);if(cabin>=capacity||result.ships[ship][cabin])continue;
+    const local=reserved[ship];
+    const remaining=result.ships[ship].slice(cabin,capacity).filter(id=>!id).length;
+    // Keep enough seats for crew needed by this ship, including partial goals.
+    const useLocal=local.length&&(!free.length||local.length>=remaining||compare(local[0],free[0])<=0);
+    const id=useLocal?local.shift():free.shift();if(id)result.ships[ship][cabin]=id;
+  }
+  return result;
+}
 // Time-bounded multi-start greedy search. Reports the best found arrangement;
 // does not claim a proof of global optimality or infeasibility.
 export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Math.random}={}){
@@ -85,7 +110,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     }}
     const result=objective(trial);if(!best||better(result,score)){best=trial;score=result;}
     iterations++;
-    if(performance.now()-lastProgress>250){lastProgress=performance.now();onProgress({state:best,iterations,elapsed:performance.now()-started,achieved:score.summary.achieved});}
+    if(performance.now()-lastProgress>250){lastProgress=performance.now();onProgress({state:distributeFleet(best,data),iterations,elapsed:performance.now()-started,achieved:score.summary.achieved});}
   }while(performance.now()-started<milliseconds);
-  return {state:best,iterations,elapsed:performance.now()-started,achieved:score.summary.achieved};
+  return {state:distributeFleet(best,data),iterations,elapsed:performance.now()-started,achieved:score.summary.achieved};
 }
