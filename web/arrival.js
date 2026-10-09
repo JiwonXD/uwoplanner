@@ -1,8 +1,9 @@
 const $ = s => document.querySelector(s);
 const KEY = 'uwo-arrival-settings';
-const DEFAULTS = { threshold: 0.75, cooldown: 90, sound: true, volume: 0.6, repeat: 3, notify: false, discord: false, webhook: '',
-  message: '⚓ {place}에 도착했어요! ({time})', titleFlash: true };
-const STRONG_MARGIN = 0.05; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
+const SETTINGS_VERSION = 2;
+const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, volume: 0.6, repeat: 3, discord: false, webhook: '',
+  message: '⚓ {place}에 도착했어요! ({time})' };
+const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
 const MIN_FRAME_GAP = 150; // ms between frames handed to the worker; the busy flag prevents a backlog
 const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
@@ -13,37 +14,51 @@ const log = [];
 const recent = []; // {ts, score, name} for the rolling best-score readout
 const testWaiters = new Map();
 
-function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch { /* private mode */ } }
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY)) || {};
+    if (saved.version !== SETTINGS_VERSION) saved.threshold = DEFAULTS.threshold; // older saves kept a lower default
+    const picked = {};
+    for (const key of Object.keys(DEFAULTS)) if (key in saved) picked[key] = saved[key];
+    return picked;
+  } catch { return {}; }
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ ...settings, version: SETTINGS_VERSION })); } catch { /* private mode */ } }
 function notice(text, kind = '') { const el = $('#notice'); el.textContent = text; el.className = kind; el.hidden = !text; }
 function fmtTime(d = new Date()) { return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
+function setState(text, active) { $('#capture-state').textContent = text; const chip = $('#state-chip'); chip.textContent = active ? '감시 중' : text; chip.classList.toggle('active', !!active); }
 
 // ---- settings binding ----
-for (const el of document.querySelectorAll('[data-setting]')) {
-  const key = el.dataset.setting;
-  if (el.type === 'checkbox') el.checked = !!settings[key]; else el.value = settings[key];
-  el.addEventListener(el.type === 'range' || el.type === 'text' || el.type === 'url' ? 'input' : 'change', () => {
-    settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value.trim();
-    if (key === 'notify' && el.checked) requestNotifyPermission();
-    save(); renderSettings();
-  });
+function bindSettings() {
+  for (const el of document.querySelectorAll('[data-setting]')) {
+    const key = el.dataset.setting;
+    if (el.type === 'checkbox') el.checked = !!settings[key]; else el.value = settings[key];
+    if (el.dataset.bound) continue;
+    el.dataset.bound = '1';
+    el.addEventListener(el.type === 'checkbox' || el.type === 'number' ? 'change' : 'input', () => {
+      settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value.trim();
+      save(); renderSettings();
+    });
+  }
 }
 function renderSettings() {
   $('#threshold-value').value = settings.threshold.toFixed(2);
   $('#meter-mark').style.left = `${settings.threshold * 100}%`;
-  const perm = 'Notification' in window ? Notification.permission : 'unsupported';
-  $('#notify-state').textContent = perm === 'unsupported' ? '이 브라우저는 시스템 알림을 지원하지 않아요.'
-    : perm === 'granted' ? '알림 권한이 허용되어 있어요.' : perm === 'denied' ? '알림 권한이 차단되어 있어요. 주소창 자물쇠 아이콘에서 허용해 주세요.' : '체크하면 알림 권한을 요청해요.';
-  $('#discord-state').textContent = settings.discord && !isDiscordUrl(settings.webhook) ? '디스코드 웹훅 URL 형식이 아니에요.' : '';
+  if (settings.discord && !isDiscordUrl(settings.webhook)) $('#discord-state').textContent = settings.webhook ? '디스코드 웹훅 URL 형식이 아니에요.' : '웹훅 URL을 입력해 주세요.';
 }
-async function requestNotifyPermission() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'default') await Notification.requestPermission();
-  renderSettings();
-}
+$('#settings-reset').onclick = () => {
+  if (!confirm('알림 설정을 기본값으로 되돌릴까요? 웹훅 URL도 지워져요.')) return;
+  Object.assign(settings, DEFAULTS); save(); bindSettings(); $('#discord-state').textContent = ''; renderSettings(); notice('설정을 기본값으로 되돌렸어요.');
+};
+$('#webhook-toggle').onclick = () => {
+  const input = $('#webhook'), show = input.type === 'password';
+  input.type = show ? 'text' : 'password'; $('#webhook-toggle').textContent = show ? '숨기기' : '표시';
+};
 function isDiscordUrl(url) {
   try { const u = new URL(url); return u.protocol === 'https:' && /(^|\.)discord(app)?\.com$/.test(u.hostname) && u.pathname.startsWith('/api/webhooks/'); } catch { return false; }
 }
+$('#about').onclick = () => $('#about-dialog').showModal();
+$('#about-close').onclick = () => $('#about-dialog').close();
 
 // ---- capture ----
 const supported = !!navigator.mediaDevices?.getDisplayMedia;
@@ -56,17 +71,19 @@ $('#stop').onclick = () => stopCapture('캡처를 중지했어요.');
 async function startCapture() {
   try {
     unlockAudio();
+    setState('창 선택 중', false);
     stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 4, max: 5 } }, audio: false,
       selfBrowserSurface: 'exclude', surfaceSwitching: 'include', monitorTypeSurfaces: 'include', preferCurrentTab: false });
   } catch (error) {
+    setState('대기', false);
     notice(error.name === 'NotAllowedError' ? '캡처할 창을 선택하지 않았어요.' : `캡처를 시작하지 못했어요: ${error.message}`, 'error');
     return;
   }
   track = stream.getVideoTracks()[0];
   track.addEventListener('ended', () => stopCapture('게임 창 공유가 끝났어요. 다시 캡처를 시작해 주세요.'));
   $('#preview').srcObject = stream; $('#preview-empty').hidden = true;
-  $('#start').hidden = true; $('#stop').hidden = false; $('#capture-state').textContent = '감시 중';
-  const label = track.label || '';
+  $('#start').hidden = true; $('#stop').hidden = false; setState('감시 중', true);
+  const label = (track.label || '').replace(/^window:|^screen:/, '').trim();
   notice(label ? `‘${label}’ 창을 감시하고 있어요. 이 탭은 닫지 말고 다른 일을 하셔도 돼요.` : '감시를 시작했어요. 이 탭은 닫지 말고 다른 일을 하셔도 돼요.');
   ensureWorker(); busy = false; streak = 0; lastFrameAt = Date.now();
   if ('MediaStreamTrackProcessor' in window) {
@@ -106,14 +123,14 @@ function stopCapture(message) {
   clearInterval(fallbackTimer); clearInterval(staleTimer);
   stream?.getTracks().forEach(t => t.stop()); stream = track = null;
   $('#preview').srcObject = null; $('#preview-empty').hidden = false; $('#match-box').hidden = true;
-  $('#start').hidden = false; $('#stop').hidden = true; $('#capture-state').textContent = '대기'; $('#stale-line').hidden = true;
+  $('#start').hidden = false; $('#stop').hidden = true; setState('대기', false); $('#stale-line').hidden = true;
   busy = false;
   if (message) notice(message);
 }
 function checkStale() {
   if (!stream) return;
   const gap = Date.now() - lastFrameAt;
-  if (gap > 10000) { $('#stale-line').textContent = `${Math.round(gap / 1000)}초 동안 새 프레임이 없어요. 게임 창이 최소화되어 있거나 가려져 있지 않은지 확인해 주세요.`; $('#stale-line').hidden = false; }
+  if (gap > 10000) { $('#stale-line').textContent = `${Math.round(gap / 1000)}초 동안 새 화면이 들어오지 않아요. 게임 창이 최소화되어 있지 않은지 확인해 주세요.`; $('#stale-line').hidden = false; }
 }
 window.addEventListener('pagehide', () => stopCapture());
 
@@ -146,7 +163,8 @@ function renderResult(r) {
   recent.push({ ts: r.ts, score: r.score, name: r.name });
   while (recent.length && r.ts - recent[0].ts > 30000) recent.shift();
   const peak = recent.reduce((m, e) => e.score > m.score ? e : m, recent[0]);
-  $('#detect-line').textContent = `${fmtTime(new Date(r.ts))} 검사 · 유사도 ${r.score.toFixed(2)} (${r.name || '-'}) · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'}) · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
+  $('#detect-line').textContent = `유사도 ${r.score.toFixed(2)} · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'})`;
+  $('#detect-tech').textContent = `${fmtTime(new Date(r.ts))} 검사 · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
   const box = $('#match-box'), video = $('#preview');
   if (r.score >= settings.threshold - 0.2 && video.videoWidth) {
     const sx = video.clientWidth / r.frameWidth, sy = video.clientHeight / r.frameHeight;
@@ -163,16 +181,16 @@ async function fireAlert(r) {
   const entry = { when, place, score: r.score, channels: [] };
   detectCount++; $('#detect-count').textContent = detectCount;
   log.unshift(entry); renderLog();
+  notice(`⚓ ${fmtTime(when)} ${place} 도착을 감지했어요.`);
+  flashTitle(`⚓ ${place} 도착!`);
   if (settings.sound) { playChime(); entry.channels.push('소리'); }
-  if (settings.titleFlash) flashTitle(`⚓ ${place} 도착!`);
-  if (settings.notify) entry.channels.push(await showNotification(place, text) ? '알림' : '알림 실패');
   if (settings.discord) entry.channels.push(await sendDiscord(text) ? '디스코드' : '디스코드 실패');
   renderLog();
 }
 function renderLog() {
   const ul = $('#log');
-  ul.innerHTML = log.length ? log.slice(0, 50).map(e => `<li><b>${fmtTime(e.when)}</b> ${e.place} 도착 감지 · 유사도 ${e.score.toFixed(2)}${e.channels.length ? ` · ${e.channels.join(', ')}` : ''}</li>`).join('')
-    : '<li class="small hint">아직 감지된 도착이 없어요.</li>';
+  ul.innerHTML = log.length ? log.slice(0, 50).map(e => `<li><b>${fmtTime(e.when)}</b> ${e.place} 도착 · 유사도 ${e.score.toFixed(2)}${e.channels.length ? ` · ${e.channels.join(', ')}` : ''}</li>`).join('')
+    : '<li class="small hint">아직 감지된 도착이 없어요. 캡처를 시작하고 항해를 떠나 보세요.</li>';
 }
 $('#log-clear').onclick = () => { log.length = 0; renderLog(); };
 
@@ -193,16 +211,8 @@ function playChime(repeat = settings.repeat, volume = settings.volume) {
 }
 $('#sound-test').onclick = () => playChime(1);
 
-async function showNotification(place, body) {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission !== 'granted') { await requestNotifyPermission(); if (Notification.permission !== 'granted') return false; }
-  try { const n = new Notification(`${place} 도착`, { body, tag: 'uwo-arrival', requireInteraction: true, icon: './favicon.svg' }); n.onclick = () => { window.focus(); n.close(); }; return true; }
-  catch { return false; }
-}
-$('#notify-test').onclick = async () => { const ok = await showNotification('테스트', '이렇게 알림이 떠요.'); if (!ok) notice('알림을 띄우지 못했어요. 권한 상태를 확인해 주세요.', 'error'); };
-
 async function sendDiscord(content) {
-  if (!isDiscordUrl(settings.webhook)) { $('#discord-state').textContent = '디스코드 웹훅 URL 형식이 아니에요.'; return false; }
+  if (!isDiscordUrl(settings.webhook)) { $('#discord-state').textContent = settings.webhook ? '디스코드 웹훅 URL 형식이 아니에요.' : '웹훅 URL을 입력해 주세요.'; return false; }
   try {
     const res = await fetch(settings.webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, username: '항로 입항 알림' }) });
     if (!res.ok) { $('#discord-state').textContent = `디스코드 응답 오류 ${res.status}`; return false; }
@@ -222,7 +232,8 @@ $('#test-files').onchange = async e => {
   const box = $('#test-results'); box.innerHTML = '';
   for (const file of files) {
     const r = await testImage(file, file.name);
-    box.insertAdjacentHTML('beforeend', `<div class="test-row ${r.score >= settings.threshold ? 'hit' : ''}"><span>${file.name}</span><b>${r.score >= 0 ? r.score.toFixed(2) : '오류'}</b><small>${r.name || ''} · ${r.frameWidth || '?'}×${r.frameHeight || '?'} · ${r.ms ?? '-'}ms</small></div>`);
+    const hit = r.score >= settings.threshold;
+    box.insertAdjacentHTML('beforeend', `<div class="test-row ${hit ? 'hit' : ''}"><span>${file.name}</span><b>${r.score >= 0 ? r.score.toFixed(2) : '오류'}</b><small>${hit ? `${r.name} 도착으로 판정` : '도착 아님'} · ${r.frameWidth || '?'}×${r.frameHeight || '?'} · ${r.ms ?? '-'}ms</small></div>`);
   }
 };
 async function testImage(blob, name = String(Date.now()), options) {
@@ -233,4 +244,6 @@ async function testImage(blob, name = String(Date.now()), options) {
 }
 window.arrivalTestImage = testImage; // used by automated checks
 
+bindSettings();
 renderSettings();
+save();
