@@ -1,12 +1,12 @@
 const $ = s => document.querySelector(s);
 const KEY = 'uwo-arrival-settings';
 const SETTINGS_VERSION = 2;
-const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, tone: 'chime', volume: 0.6, repeat: 3, discord: false, webhook: '',
+const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, tone: 'confirm', volume: 0.6, repeat: 3, discord: false, webhook: '',
   message: '⚓ {place}에 도착했어요! ({time})' };
 const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
 const MIN_FRAME_GAP = 600; // ms between frames handed to the worker; arrival screens stay up for seconds, so ~1.5 checks/s is plenty
 const DEBUG = new URLSearchParams(location.search).has('debug'); // ?debug shows the log and screenshot test tools
-const TONE_KEYS = ['confirm', 'melody', 'glass', 'low', 'chime', 'beep', 'sharp', 'horn'];
+const TONE_KEYS = ['confirm', 'melody', 'chime', 'sharp', 'beep', 'retro', 'soft', 'gull'];
 const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
 let worker, stream, track, reader, fallbackTimer, staleTimer, flashTimer;
@@ -219,21 +219,31 @@ function note(out, { type = 'sine', freq, at, dur, attack = 0.01, sustain = 0, l
 const TONES = {
   confirm: { label: '확인음', file: './sounds/confirmation_001.ogg', length: 0.6 },
   melody: { label: '확인 멜로디', file: './sounds/confirmation_002.ogg', length: 1.0 },
-  glass: { label: '유리 딩', file: './sounds/glass_004.ogg', length: 0.8 },
-  low: { label: '낮은 톤', file: './sounds/question_004.ogg', length: 0.5 },
-  chime: { label: '차임 3음', length: 0.9, play(out, t, ctx) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8, ctx })); } },
-  beep: { label: '기본 비프', length: 0.35, play(out, t, ctx) { note(out, { freq: 880, at: t, dur: 0.28, attack: 0.005, sustain: 0.1, level: 0.9, ctx }); note(out, { freq: 1760, at: t, dur: 0.22, attack: 0.005, level: 0.35, ctx }); note(out, { type: 'triangle', freq: 440, at: t, dur: 0.28, attack: 0.005, sustain: 0.1, level: 0.4, ctx }); } },
-  sharp: { label: '날카로운 비프', length: 0.45, play(out, t, ctx) { for (let i = 0; i < 2; i++) note(out, { type: 'square', freq: 1200, at: t + i * 0.2, dur: 0.16, attack: 0.004, sustain: 0.09, level: 0.5, ctx }); } },
-  horn: { label: '뱃고동', length: 2.4, play(out, t, ctx) {
-    // Stacked low partials with a slow swell, vibrato and a long tail, like a large ship horn.
-    const vib = { rate: 5.5, depth: 2.5 }, body = { type: 'sawtooth', at: t, dur: 2.3, attack: 0.35, sustain: 1.1, vibrato: vib, ctx };
-    note(out, { ...body, freq: 98, level: 0.75, lowpass: 700 });
-    note(out, { ...body, freq: 147, level: 0.5, lowpass: 900 });
-    note(out, { ...body, freq: 196, level: 0.38, lowpass: 1400 });
-    note(out, { ...body, type: 'square', freq: 294, level: 0.15, lowpass: 1800 });
-    note(out, { ...body, type: 'sine', freq: 392, level: 0.22 });
-  } },
+  chime: { label: '차임 3음', length: 0.9, play(out, t, ctx) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.95, ctx })); } },
+  sharp: { label: '날카로운 비프', length: 0.45, play(out, t, ctx) { for (let i = 0; i < 2; i++) note(out, { type: 'square', freq: 1200, at: t + i * 0.2, dur: 0.16, attack: 0.004, sustain: 0.09, level: 0.7, ctx }); } },
+  // The next three follow the single-oscillator beeps of popular timer sites: fixed pitch, instant start, exponential decay.
+  beep: { label: '기본 비프', length: 0.3, play(out, t, ctx) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.003, level: 1, ctx }); } },
+  retro: { label: '레트로', length: 0.2, play(out, t, ctx) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.003, level: 1, ctx }); } },
+  soft: { label: '부드러운', length: 0.4, play(out, t, ctx) { note(out, { freq: 520, at: t, dur: 0.3, attack: 0.003, level: 1, ctx }); } },
+  gull: { label: '갈매기', length: 1.5, play(out, t, ctx) { [[0, 1], [0.42, 0.94], [0.84, 1.07]].forEach(([o, m]) => gullCry(out, t + o, m, ctx)); } },
 };
+// One seagull cry ("kee-aw"): a nasal sawtooth that leaps up then slides down, with a fast flutter.
+function gullCry(out, at, pitch, ctx) {
+  const osc = ctx.createOscillator(), band = ctx.createBiquadFilter(), gain = ctx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(950 * pitch, at);
+  osc.frequency.exponentialRampToValueAtTime(2300 * pitch, at + 0.07);
+  osc.frequency.exponentialRampToValueAtTime(1700 * pitch, at + 0.2);
+  osc.frequency.exponentialRampToValueAtTime(1050 * pitch, at + 0.36);
+  const lfo = ctx.createOscillator(), depth = ctx.createGain(); lfo.frequency.value = 28; depth.gain.value = 70 * pitch; lfo.connect(depth).connect(osc.frequency);
+  band.type = 'bandpass'; band.frequency.value = 1900 * pitch; band.Q.value = 1.4;
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(1.3, at + 0.03);
+  gain.gain.setValueAtTime(1.3, at + 0.2);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.38);
+  osc.connect(band).connect(gain).connect(out);
+  osc.start(at); lfo.start(at); osc.stop(at + 0.42); lfo.stop(at + 0.42);
+}
 const buffers = new Map(); // decoded file tones, loaded on demand and cached
 async function loadBuffer(url) {
   if (buffers.has(url)) return buffers.get(url);
@@ -243,13 +253,13 @@ async function loadBuffer(url) {
   return promise;
 }
 function preloadTone(key = settings.tone) { const tone = TONES[key]; if (tone?.file && audio) loadBuffer(tone.file).catch(() => {}); }
-const FILE_GAIN = 1.8; // the CC0 recordings are mastered quieter than the synthesised tones
-// Output chain shared by every tone: volume -> gentle compressor -> limiter (loud without clipping).
+const FILE_GAIN = 1.1; // the CC0 recordings peak at about 0.9; this brings them level with the synthesised tones
+// Output chain shared by every tone: just the volume. Dynamics processing was tried and crushed the
+// short beeps (a compressor reacts to their onset and they end before it recovers), so each tone is
+// mixed to stay under full scale on its own instead.
 function outputChain(ctx, volume) {
   const master = ctx.createGain(); master.gain.value = Math.max(0, Math.min(1, volume));
-  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.knee.value = 20; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.2;
-  const limiter = ctx.createDynamicsCompressor(); limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.001; limiter.release.value = 0.1;
-  master.connect(comp).connect(limiter).connect(ctx.destination);
+  master.connect(ctx.destination);
   return master;
 }
 function fileSource(ctx, buffer, out) {
@@ -271,7 +281,7 @@ async function playChime(repeat = settings.repeat, volume = settings.volume, ton
   const tone = TONES[toneKey] || TONES.chime;
   const times = Math.max(1, repeat);
   try { await scheduleTone(audio, outputChain(audio, volume), tone, audio.currentTime + 0.05, times); }
-  catch { if (tone.file) playChime(repeat, volume, 'chime'); } // missing file: fall back to a synthesised tone
+  catch { if (tone.file) playChime(repeat, volume, 'beep'); } // missing file: fall back to a synthesised tone
 }
 // Renders one pass of a tone offline and reports its loudness (used by automated checks).
 window.arrivalMeasureTone = async key => {

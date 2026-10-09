@@ -4,4 +4,4 @@ downloaded from https://opengameart.org/content/interface-sounds (uploaded by Ke
 License: Creative Commons Zero (CC0) - http://creativecommons.org/publicdomain/zero/1.0/
 Free to use in personal, educational and commercial projects. Credit is appreciated but not required.
 
-Files: confirmation_001.ogg, confirmation_002.ogg, glass_004.ogg, question_004.ogg (unmodified).
+Files: confirmation_001.ogg, confirmation_002.ogg (unmodified).
