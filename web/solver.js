@@ -56,6 +56,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     const shipBound=[...options,...fixed].some(g=>(abilityTargets.get(g.ability)||[]).some(i=>targets[i].scope!=='fleet'));
     return {mate:m,options,fixed,useful,shipBound};
   }).filter(r=>r.useful||required.has(r.mate.id));
+  const byId=new Map(relevant.map(r=>[r.mate.id,r]));
   const removable=id=>id&&!locked.has(id)&&!required.has(id);
   // ---- scoring ----
   // A snapshot holds the per-target levels and crew counts of a trial so moves can be scored
@@ -159,11 +160,53 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     }
     return false;
   }
+  // Relocation: a ship-scoped target is short while a holder of that effect serves another
+  // ship. Move the holder over (into an empty cabin, or over a replaceable occupant) and
+  // backfill the ship it left with the best unused candidate. Accepted when the objective improves.
+  function relocatePass(trial,used,until){
+    const snap=snapshot(trial),current=scoreOf(snap);
+    const shortTargets=targets.map((t,i)=>({t,i})).filter(({t,i})=>t.scope!=='fleet'&&snap.values[i]<t.level);
+    if(!shortTargets.length)return false;
+    const seats=seatsOf(trial);
+    const config=seat=>trial.configs[seat.id]||configuration(seat.mate,trial);
+    for(const {t,i} of shortTargets){
+      const dest=t.scope;
+      const holders=seats.filter(seat=>seat.s!==dest&&byId.get(seat.id)&&[...byId.get(seat.id).options,...byId.get(seat.id).fixed].some(g=>g.ability===t.ability));
+      for(const holder of holders){
+        if(performance.now()>=until)return false;
+        const emptyCabin=trial.ships[dest].slice(0,cabinCount(input,dest)).indexOf(null);
+        const landing=emptyCabin>=0?[{c:emptyCabin,evict:null}]:seats.filter(seat=>seat.s===dest).map(seat=>({c:seat.c,evict:seat}));
+        for(const spot of landing){
+          let s1=shifted(snap,holder.mate,config(holder),holder.s,-1);
+          if(spot.evict)s1=shifted(s1,spot.evict.mate,config(spot.evict),dest,-1);
+          const rec=byId.get(holder.id);const moveOption=optionFor(rec,dest,s1.values,ones);if(moveOption.gain<=0)continue;
+          const moved=configFor(rec.mate,moveOption.effects);const s2=shifted(s1,rec.mate,moved,dest,1);
+          // Backfill the vacated seat (and, if someone was evicted, give them a chance elsewhere is left to later rounds).
+          let fill=null;const vacancyShip=holder.s;
+          for(const cand of unused(used)){
+            const option=optionFor(cand,vacancyShip,s2.values,ones);if(option.gain<=0)continue;
+            const s3=shifted(s2,cand.mate,configFor(cand.mate,option.effects),vacancyShip,1);const sc=scoreOf(s3);
+            if(better(sc,fill?fill.score:scoreOf(s2)))fill={cand,option,score:sc};
+          }
+          const finalScore=fill?fill.score:scoreOf(s2);
+          if(!better(finalScore,current))continue;
+          // apply
+          trial.ships[holder.s][holder.c]=null;
+          if(spot.evict){trial.ships[dest][spot.c]=null;used.delete(spot.evict.id);delete trial.configs[spot.evict.id];}
+          trial.ships[dest][spot.c]=holder.id;trial.configs[holder.id]=moved;
+          if(fill){trial.ships[vacancyShip][holder.c]=fill.cand.mate.id;used.add(fill.cand.mate.id);trial.configs[fill.cand.mate.id]=configFor(fill.cand.mate,fill.option.effects);}
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   function refine(trial,used,until){
-    for(let round=0;round<6&&performance.now()<until;round++){
+    for(let round=0;round<12&&performance.now()<until;round++){
+      const moved=relocatePass(trial,used,until);
       const swapped=swapPass(trial,used,until);
       const merged=mergePass(trial,used,until);
-      if(swapped||merged)prune(trial,used);else break;
+      if(swapped||merged||moved)prune(trial,used);else break;
     }
   }
   let best=structuredClone(input),score=objective(best),iterations=0,lastProgress=0;
@@ -205,8 +248,10 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       place(trial,used,current,chosen.rec,chosen.ship,chosen.cabin,chosen.option);
     }
     prune(trial,used);
-    // Spend a slice of the budget improving this construction by local moves.
-    refine(trial,used,Math.min(deadline,performance.now()+Math.max(20,milliseconds*0.05)));
+    // Spend a slice of the budget improving this construction by local moves; promising
+    // constructions (no worse than the best so far on goal shortfall) get a larger slice.
+    const promising=!best||objective(trial).deficit<=score.deficit+1e-8;
+    refine(trial,used,Math.min(deadline,performance.now()+Math.max(30,milliseconds*(promising?0.3:0.1))));
     const result=objective(trial);if(!best||better(result,score)){best=trial;score=result;}
     iterations++;
     if(performance.now()-lastProgress>250){lastProgress=performance.now();onProgress({state:distributeFleet(best,data),iterations,elapsed:performance.now()-started,achieved:summarize(best,data).achieved});}

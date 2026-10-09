@@ -122,6 +122,13 @@ test('swap refinement replaces a non-primary contributor with primary-stat crew 
   assert.equal(summary.achieved,2);assert.equal(summary.placed,2);assert.equal(summary.primaryStatCounts.박물학,2);
   assert.deepEqual(result.ships[0].filter(Boolean).sort(),['m1','m3']);
 });
+test('relocation moves a holder to the ship that needs it and backfills the ship it left',()=>{
+  // x serves both ship targets; only x can satisfy ship 2, while y can cover ship 1 instead.
+  const data=indexCatalog({mates:[mate('x',[grant('a'),grant('b')]),mate('y',[grant('a')])],abilities:[ability('a','ship'),ability('b','ship')]});
+  const state=initialState();state.shipCount=2;state.targets=[{ability:'a',scope:0,level:1},{ability:'b',scope:1,level:1}];
+  const result=solve(state,data,{milliseconds:60,random:()=>.5}).state;
+  assert.equal(summarize(result,data).achieved,2);assert.ok(result.ships[1].includes('x'));assert.ok(result.ships[0].includes('y'));
+});
 test('equipped effects are limited to those that close a targeted gap',()=>{
   const data=indexCatalog({mates:[mate('m',[grant('goal'),grant('other1'),grant('other2')])],abilities:[ability('goal'),ability('other1'),ability('other2')]});
   const state=initialState();state.shipCount=1;state.targets=[{ability:'goal',scope:'fleet',level:1}];
