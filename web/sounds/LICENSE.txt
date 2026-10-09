@@ -1,0 +1,7 @@
+Sound files in this folder come from "Interface Sounds (1.0)" by Kenney (www.kenney.nl),
+downloaded from https://opengameart.org/content/interface-sounds (uploaded by Kenney).
+
+License: Creative Commons Zero (CC0) - http://creativecommons.org/publicdomain/zero/1.0/
+Free to use in personal, educational and commercial projects. Credit is appreciated but not required.
+
+Files: confirmation_001.ogg, confirmation_002.ogg (unmodified).

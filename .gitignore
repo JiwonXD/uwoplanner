@@ -4,3 +4,5 @@ __pycache__/
 *.build.sqlite
 data/site-source/
 *.sqlite
+.claude/
+data/arrival-samples/
