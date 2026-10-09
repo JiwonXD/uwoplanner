@@ -2,14 +2,15 @@ const $ = s => document.querySelector(s);
 const KEY = 'uwo-arrival-settings';
 const DEFAULTS = { threshold: 0.75, cooldown: 90, sound: true, volume: 0.6, repeat: 3, notify: false, discord: false, webhook: '',
   message: '⚓ {place}에 도착했어요! ({time})', titleFlash: true };
-const STRONG_MARGIN = 0.12; // one frame this far above the threshold alerts immediately
-const MIN_FRAME_GAP = 300; // ms between frames handed to the worker
+const STRONG_MARGIN = 0.05; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
+const MIN_FRAME_GAP = 150; // ms between frames handed to the worker; the busy flag prevents a backlog
 const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
 let worker, stream, track, reader, fallbackTimer, staleTimer, flashTimer;
 let busy = false, lastSent = 0, lastFrameAt = 0, lastAlertAt = 0, streak = 0, detectCount = 0;
 let audio;
 const log = [];
+const recent = []; // {ts, score, name} for the rolling best-score readout
 const testWaiters = new Map();
 
 function load() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } }
@@ -142,7 +143,10 @@ function onResult(r) {
 function renderResult(r) {
   const pct = Math.max(0, Math.min(1, r.score)) * 100;
   const fill = $('#meter-fill'); fill.style.width = `${pct}%`; fill.classList.toggle('hit', r.score >= settings.threshold);
-  $('#detect-line').textContent = `${fmtTime(new Date(r.ts))} 검사 · 유사도 ${r.score.toFixed(2)} (${r.name || '-'}) · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
+  recent.push({ ts: r.ts, score: r.score, name: r.name });
+  while (recent.length && r.ts - recent[0].ts > 30000) recent.shift();
+  const peak = recent.reduce((m, e) => e.score > m.score ? e : m, recent[0]);
+  $('#detect-line').textContent = `${fmtTime(new Date(r.ts))} 검사 · 유사도 ${r.score.toFixed(2)} (${r.name || '-'}) · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'}) · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
   const box = $('#match-box'), video = $('#preview');
   if (r.score >= settings.threshold - 0.2 && video.videoWidth) {
     const sx = video.clientWidth / r.frameWidth, sy = video.clientHeight / r.frameHeight;
