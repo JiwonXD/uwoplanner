@@ -216,6 +216,14 @@ const TONES = {
   beep: { label: '삑삑', length: 0.8, play(out, t) { for (let i = 0; i < 3; i++) note(out, { type: 'square', freq: 1000, at: t + i * 0.22, dur: 0.12, attack: 0.005, level: 0.25 }); } },
   horn: { label: '뱃고동', length: 1.4, play(out, t) { note(out, { type: 'sawtooth', freq: 110, at: t, dur: 1.2, attack: 0.12, level: 0.6, lowpass: 420 }); note(out, { type: 'sawtooth', freq: 165, at: t, dur: 1.2, attack: 0.12, level: 0.35, lowpass: 520 }); } },
   alarm: { label: '경보', length: 1.3, play(out, t) { for (let i = 0; i < 4; i++) note(out, { type: 'square', freq: i % 2 ? 700 : 900, at: t + i * 0.3, dur: 0.26, attack: 0.01, level: 0.22 }); } },
+  // Single-note beeps in the style of popular timer sites: one oscillator, quick decay.
+  beepStandard: { label: '기본 비프', group: '단음 비프', length: 0.3, play(out, t) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.005, level: 0.7 }); } },
+  beepAlert: { label: '날카로운', group: '단음 비프', length: 0.25, play(out, t) { note(out, { type: 'square', freq: 1200, at: t, dur: 0.15, attack: 0.005, level: 0.25 }); } },
+  beepSoft: { label: '부드러운', group: '단음 비프', length: 0.4, play(out, t) { note(out, { freq: 520, at: t, dur: 0.3, attack: 0.01, level: 0.7 }); } },
+  beepLow: { label: '낮은 음', group: '단음 비프', length: 0.45, play(out, t) { note(out, { freq: 440, at: t, dur: 0.35, attack: 0.01, level: 0.7 }); } },
+  beepRetro: { label: '레트로', group: '단음 비프', length: 0.2, play(out, t) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.005, level: 0.3, lowpass: 2400 }); } },
+  beepPing: { label: '핑', group: '단음 비프', length: 0.2, play(out, t) { note(out, { freq: 1320, at: t, dur: 0.12, attack: 0.005, level: 0.6 }); } },
+  beepDing: { label: '딩', group: '단음 비프', length: 0.35, play(out, t) { note(out, { type: 'triangle', freq: 660, at: t, dur: 0.25, attack: 0.005, level: 0.6 }); } },
 };
 function playChime(repeat = settings.repeat, volume = settings.volume, toneKey = settings.tone) {
   unlockAudio(); if (!audio) return;
@@ -225,7 +233,15 @@ function playChime(repeat = settings.repeat, volume = settings.volume, toneKey =
   for (let n = 0; n < Math.max(1, repeat); n++) tone.play(master, start + n * (tone.length + 0.25));
 }
 const toneSelect = $('#tone');
-toneSelect.innerHTML = Object.entries(TONES).map(([key, tone]) => `<option value="${key}">${tone.label}</option>`).join('');
+{
+  const groups = new Map();
+  for (const [key, tone] of Object.entries(TONES)) {
+    const group = tone.group || '멜로디';
+    if (!groups.has(group)) groups.set(group, []);
+    groups.get(group).push(`<option value="${key}">${tone.label}</option>`);
+  }
+  toneSelect.innerHTML = [...groups].map(([group, options]) => `<optgroup label="${group}">${options.join('')}</optgroup>`).join('');
+}
 $('#sound-test').onclick = () => playChime(1);
 
 async function sendDiscord(content) {
