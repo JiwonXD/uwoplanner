@@ -6,6 +6,7 @@ const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, tone: 'chime', vol
 const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
 const MIN_FRAME_GAP = 600; // ms between frames handed to the worker; arrival screens stay up for seconds, so ~1.5 checks/s is plenty
 const DEBUG = new URLSearchParams(location.search).has('debug'); // ?debug shows the log and screenshot test tools
+const TONE_KEYS = ['confirm', 'melody', 'glass', 'low', 'chime', 'beep', 'sharp', 'horn'];
 const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
 let worker, stream, track, reader, fallbackTimer, staleTimer, flashTimer;
@@ -19,6 +20,7 @@ function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY)) || {};
     if (saved.version !== SETTINGS_VERSION) saved.threshold = DEFAULTS.threshold; // older saves kept a lower default
+    if (saved.tone && !TONE_KEYS.includes(saved.tone)) delete saved.tone; // tones removed in a later version
     const picked = {};
     for (const key of Object.keys(DEFAULTS)) if (key in saved) picked[key] = saved[key];
     return picked;
@@ -36,8 +38,9 @@ function bindSettings() {
     if (el.type === 'checkbox') el.checked = !!settings[key]; else el.value = settings[key];
     if (el.dataset.bound) continue;
     el.dataset.bound = '1';
-    el.addEventListener(el.type === 'checkbox' || el.type === 'number' ? 'change' : 'input', () => {
+    el.addEventListener(el.type === 'checkbox' || el.type === 'number' || el.tagName === 'SELECT' ? 'change' : 'input', () => {
       settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value.trim();
+      if (key === 'tone') { unlockAudio(); preloadTone(); }
       save(); renderSettings();
     });
   }
@@ -86,7 +89,7 @@ async function startCapture() {
   $('#start').hidden = true; $('#stop').hidden = false; setState('감시 중', true);
   const label = (track.label || '').replace(/^window:|^screen:/, '').trim();
   notice(label ? `‘${label}’ 창을 감시하고 있어요. 이 탭은 닫지 말고 다른 일을 하셔도 돼요.` : '감시를 시작했어요. 이 탭은 닫지 말고 다른 일을 하셔도 돼요.');
-  ensureWorker(); busy = false; streak = 0; lastFrameAt = Date.now();
+  ensureWorker(); preloadTone(); busy = false; streak = 0; lastFrameAt = Date.now();
   if ('MediaStreamTrackProcessor' in window) {
     reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
     pump(reader);
@@ -209,39 +212,43 @@ function note(out, { type = 'sine', freq, at, dur, attack = 0.01, level = 1, low
   if (lowpass) { const f = audio.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; node = osc.connect(f); }
   node.connect(gain).connect(out); osc.start(at); osc.stop(at + dur + 0.05);
 }
+// Eight alert sounds with distinct characters: four CC0 recordings from Kenney's Interface Sounds
+// (web/sounds, see LICENSE.txt there) and four synthesised tones in the style of popular timer sites.
 const TONES = {
-  chime: { label: '차임 (기본)', length: 0.9, play(out, t) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8 })); } },
-  bell: { label: '종소리', length: 1.5, play(out, t) { [[1047, 0.9], [2093, 0.3], [3136, 0.12]].forEach(([freq, level]) => note(out, { freq, at: t, dur: 1.4, attack: 0.005, level })); } },
-  dingdong: { label: '딩동', length: 1.1, play(out, t) { note(out, { freq: 784, at: t, dur: 0.5, level: 0.8 }); note(out, { freq: 523, at: t + 0.45, dur: 0.6, level: 0.8 }); } },
-  beep: { label: '삑삑', length: 0.8, play(out, t) { for (let i = 0; i < 3; i++) note(out, { type: 'square', freq: 1000, at: t + i * 0.22, dur: 0.12, attack: 0.005, level: 0.25 }); } },
+  confirm: { label: '확인음 (파일)', file: './sounds/confirmation_001.ogg', length: 0.6 },
+  melody: { label: '확인 멜로디 (파일)', file: './sounds/confirmation_002.ogg', length: 1.0 },
+  glass: { label: '유리 딩 (파일)', file: './sounds/glass_004.ogg', length: 0.8 },
+  low: { label: '낮은 톤 (파일)', file: './sounds/question_004.ogg', length: 0.5 },
+  chime: { label: '차임 3음', length: 0.9, play(out, t) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8 })); } },
+  beep: { label: '기본 비프', length: 0.3, play(out, t) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.005, level: 0.7 }); } },
+  sharp: { label: '날카로운 비프', length: 0.25, play(out, t) { note(out, { type: 'square', freq: 1200, at: t, dur: 0.15, attack: 0.005, level: 0.25 }); } },
   horn: { label: '뱃고동', length: 1.4, play(out, t) { note(out, { type: 'sawtooth', freq: 110, at: t, dur: 1.2, attack: 0.12, level: 0.6, lowpass: 420 }); note(out, { type: 'sawtooth', freq: 165, at: t, dur: 1.2, attack: 0.12, level: 0.35, lowpass: 520 }); } },
-  alarm: { label: '경보', length: 1.3, play(out, t) { for (let i = 0; i < 4; i++) note(out, { type: 'square', freq: i % 2 ? 700 : 900, at: t + i * 0.3, dur: 0.26, attack: 0.01, level: 0.22 }); } },
-  // Single-note beeps in the style of popular timer sites: one oscillator, quick decay.
-  beepStandard: { label: '기본 비프', group: '단음 비프', length: 0.3, play(out, t) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.005, level: 0.7 }); } },
-  beepAlert: { label: '날카로운', group: '단음 비프', length: 0.25, play(out, t) { note(out, { type: 'square', freq: 1200, at: t, dur: 0.15, attack: 0.005, level: 0.25 }); } },
-  beepSoft: { label: '부드러운', group: '단음 비프', length: 0.4, play(out, t) { note(out, { freq: 520, at: t, dur: 0.3, attack: 0.01, level: 0.7 }); } },
-  beepLow: { label: '낮은 음', group: '단음 비프', length: 0.45, play(out, t) { note(out, { freq: 440, at: t, dur: 0.35, attack: 0.01, level: 0.7 }); } },
-  beepRetro: { label: '레트로', group: '단음 비프', length: 0.2, play(out, t) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.005, level: 0.3, lowpass: 2400 }); } },
-  beepPing: { label: '핑', group: '단음 비프', length: 0.2, play(out, t) { note(out, { freq: 1320, at: t, dur: 0.12, attack: 0.005, level: 0.6 }); } },
-  beepDing: { label: '딩', group: '단음 비프', length: 0.35, play(out, t) { note(out, { type: 'triangle', freq: 660, at: t, dur: 0.25, attack: 0.005, level: 0.6 }); } },
 };
-function playChime(repeat = settings.repeat, volume = settings.volume, toneKey = settings.tone) {
+const buffers = new Map(); // decoded file tones, loaded on demand and cached
+async function loadBuffer(url) {
+  if (buffers.has(url)) return buffers.get(url);
+  const promise = fetch(url).then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.arrayBuffer(); }).then(bytes => audio.decodeAudioData(bytes));
+  buffers.set(url, promise);
+  promise.catch(() => buffers.delete(url));
+  return promise;
+}
+function preloadTone(key = settings.tone) { const tone = TONES[key]; if (tone?.file && audio) loadBuffer(tone.file).catch(() => {}); }
+async function playChime(repeat = settings.repeat, volume = settings.volume, toneKey = settings.tone) {
   unlockAudio(); if (!audio) return;
   const tone = TONES[toneKey] || TONES.chime;
   const master = audio.createGain(); master.gain.value = Math.max(0, Math.min(1, volume)); master.connect(audio.destination);
-  const start = audio.currentTime + 0.05;
-  for (let n = 0; n < Math.max(1, repeat); n++) tone.play(master, start + n * (tone.length + 0.25));
-}
-const toneSelect = $('#tone');
-{
-  const groups = new Map();
-  for (const [key, tone] of Object.entries(TONES)) {
-    const group = tone.group || '멜로디';
-    if (!groups.has(group)) groups.set(group, []);
-    groups.get(group).push(`<option value="${key}">${tone.label}</option>`);
+  const times = Math.max(1, repeat);
+  if (tone.file) {
+    let buffer;
+    try { buffer = await loadBuffer(tone.file); } catch { return playChime(repeat, volume, 'chime'); } // fall back to a synthesised tone
+    const start = audio.currentTime + 0.05, gap = Math.max(tone.length, buffer.duration) + 0.25;
+    for (let n = 0; n < times; n++) { const src = audio.createBufferSource(); src.buffer = buffer; src.connect(master); src.start(start + n * gap); }
+    return;
   }
-  toneSelect.innerHTML = [...groups].map(([group, options]) => `<optgroup label="${group}">${options.join('')}</optgroup>`).join('');
+  const start = audio.currentTime + 0.05;
+  for (let n = 0; n < times; n++) tone.play(master, start + n * (tone.length + 0.25));
 }
+$('#tone').innerHTML = Object.entries(TONES).map(([key, tone]) => `<option value="${key}">${tone.label}</option>`).join('');
 $('#sound-test').onclick = () => playChime(1);
 
 async function sendDiscord(content) {

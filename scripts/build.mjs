@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile, readdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 const root = new URL('../', import.meta.url);
 const out = new URL('dist/', root);
@@ -13,6 +13,9 @@ for (let i=0;i<files.length;i++) {
   if(file.endsWith('.html'))content=content.replace(/((?:src|href)="\.\/[^"?]+\.(?:js|css))"/g,`$1?v=${revision}"`);
   await writeFile(new URL(file,out),content);
 }
+const soundsDir = new URL('web/sounds/', root);
+await mkdir(new URL('sounds/', out), { recursive: true });
+for (const name of await readdir(soundsDir)) await copyFile(new URL(name, soundsDir), new URL(`sounds/${name}`, out));
 const catalog = JSON.parse(catalogText);
 const grants = new Map();
 for (const g of catalog.grants) {
