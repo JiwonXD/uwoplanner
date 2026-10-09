@@ -15,14 +15,19 @@ export function decodeRle(runs, width, height) {
 // Luma > 215 and low saturation = white UI text. `dil` marks bright pixels and their 4-neighbours
 // (1px tolerance for scale rounding without rewarding dense noise).
 export function brightMask(rgba, width, height, luma = 215, sat = 50) {
-  const mask = new Uint8Array(width * height);
-  for (let i = 0, p = 0; i < mask.length; i++, p += 4) {
+  return brightMasks(rgba, width, height, [{ luma, sat }])[0];
+}
+
+// Several thresholds from one pass over the pixels (templates may use different thresholds).
+export function brightMasks(rgba, width, height, thresholds) {
+  const n = width * height, masks = thresholds.map(() => new Uint8Array(n));
+  for (let i = 0, p = 0; i < n; i++, p += 4) {
     const r = rgba[p], g = rgba[p + 1], b = rgba[p + 2];
     const l = (r * 299 + g * 587 + b * 114) / 1000;
     const s = Math.max(r, g, b) - Math.min(r, g, b);
-    if (l > luma && s < sat) mask[i] = 1;
+    for (let k = 0; k < thresholds.length; k++) if (l > thresholds[k].luma && s < thresholds[k].sat) masks[k][i] = 1;
   }
-  return { mask, dil: dilate(mask, width, height), width, height };
+  return masks.map(mask => ({ mask, dil: dilate(mask, width, height), width, height }));
 }
 
 export function dilate(mask, width, height) {
@@ -94,16 +99,19 @@ export function defaultScales(min = 0.5, max = 2.2, step = 0.05) {
 export function detect(frame, tpl, options = {}) {
   const { width, height } = frame;
   const scales = options.scales || defaultScales();
-  const step = options.step || 2;
+  const step = options.step || 3; // coarse grid; the refine pass below covers the gaps
   const minA = options.minA ?? 0.7;
   const minScore = options.minScore ?? 0.5; // sampled (text - ring) estimate needed before a full evaluation
   const exactGate = options.exactGate ?? 0.5; // below this, exact-position coverage caps the score
   const cache = options.cache || (options.cache = new Map());
   const area = integral(frame.dil, width, height);
   let best = { score: -1, a: 0, b: 0, c: 0, exact: 0, x: 0, y: 0, scale: 1 };
+  const perScale = new Map(); // best coarse candidate at each scale, so refinement can try several scales
   const consider = (st, x, y) => {
     const r = scoreAt(frame, st, x, y);
     if (r.score > best.score) best = { ...r, x, y, scale: st.scale };
+    const prev = perScale.get(st.scale);
+    if (!prev || r.score > prev.score) perScale.set(st.scale, { score: r.score, x, y, scale: st.scale });
   };
   for (const scale of scales) {
     let st = cache.get(scale); if (!st) cache.set(scale, st = scaleTemplate(tpl, scale));
@@ -122,13 +130,14 @@ export function detect(frame, tpl, options = {}) {
     }
   }
   if (best.score < 0) return best;
-  // Refine around the best candidate with 1px steps and finer scales.
-  const coarse = best;
-  for (const scale of [coarse.scale - 0.025, coarse.scale, coarse.scale + 0.025]) {
+  // Refine the strongest coarse candidates (up to three scales) with 1px steps and finer scales.
+  const reach = step;
+  const seeds = [...perScale.values()].sort((p, q) => q.score - p.score).slice(0, 3);
+  for (const coarse of seeds) for (const scale of [coarse.scale - 0.025, coarse.scale, coarse.scale + 0.025]) {
     const st = scaleTemplate(tpl, scale); st.exactGate = exactGate;
     if (st.w > width || st.h > height) continue;
-    for (let y = Math.max(0, coarse.y - 2); y <= Math.min(height - st.h, coarse.y + 2); y++)
-      for (let x = Math.max(0, coarse.x - 2); x <= Math.min(width - st.w, coarse.x + 2); x++) consider(st, x, y);
+    for (let y = Math.max(0, coarse.y - reach); y <= Math.min(height - st.h, coarse.y + reach); y++)
+      for (let x = Math.max(0, coarse.x - reach); x <= Math.min(width - st.w, coarse.x + reach); x++) consider(st, x, y);
   }
   return best;
 }

@@ -4,7 +4,8 @@ const SETTINGS_VERSION = 2;
 const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, volume: 0.6, repeat: 3, discord: false, webhook: '',
   message: '⚓ {place}에 도착했어요! ({time})' };
 const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
-const MIN_FRAME_GAP = 150; // ms between frames handed to the worker; the busy flag prevents a backlog
+const MIN_FRAME_GAP = 600; // ms between frames handed to the worker; arrival screens stay up for seconds, so ~1.5 checks/s is plenty
+const DEBUG = new URLSearchParams(location.search).has('debug'); // ?debug shows the log and screenshot test tools
 const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
 let worker, stream, track, reader, fallbackTimer, staleTimer, flashTimer;
@@ -63,7 +64,7 @@ $('#about-close').onclick = () => $('#about-dialog').close();
 // ---- capture ----
 const supported = !!navigator.mediaDevices?.getDisplayMedia;
 if (!supported) { $('#start').disabled = true; $('#capture-support').textContent = '이 브라우저는 화면 캡처를 지원하지 않아요. PC의 크롬이나 엣지에서 열어 주세요.'; }
-else if (!('MediaStreamTrackProcessor' in window)) $('#capture-support').textContent = '이 브라우저에서는 0.5초 간격으로 검사해요. 크롬·엣지가 더 안정적이에요.';
+else if (!('MediaStreamTrackProcessor' in window)) $('#capture-support').textContent = '이 브라우저에서는 0.7초 간격으로 검사해요. 크롬·엣지가 더 안정적이에요.';
 
 $('#start').onclick = startCapture;
 $('#stop').onclick = () => stopCapture('캡처를 중지했어요.');
@@ -72,7 +73,7 @@ async function startCapture() {
   try {
     unlockAudio();
     setState('창 선택 중', false);
-    stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 4, max: 5 } }, audio: false,
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 2, max: 3 } }, audio: false,
       selfBrowserSurface: 'exclude', surfaceSwitching: 'include', monitorTypeSurfaces: 'include', preferCurrentTab: false });
   } catch (error) {
     setState('대기', false);
@@ -90,7 +91,7 @@ async function startCapture() {
     reader = new MediaStreamTrackProcessor({ track }).readable.getReader();
     pump(reader);
   } else {
-    fallbackTimer = setInterval(grabFromVideo, 500);
+    fallbackTimer = setInterval(grabFromVideo, 700);
   }
   clearInterval(staleTimer);
   staleTimer = setInterval(checkStale, 5000);
@@ -163,7 +164,7 @@ function renderResult(r) {
   recent.push({ ts: r.ts, score: r.score, name: r.name });
   while (recent.length && r.ts - recent[0].ts > 30000) recent.shift();
   const peak = recent.reduce((m, e) => e.score > m.score ? e : m, recent[0]);
-  $('#detect-line').textContent = `유사도 ${r.score.toFixed(2)} · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'})`;
+  $('#detect-line').textContent = DEBUG ? `유사도 ${r.score.toFixed(2)} · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'})` : `도착 화면 유사도 ${r.score.toFixed(2)} · 감시 중`;
   $('#detect-tech').textContent = `${fmtTime(new Date(r.ts))} 검사 · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
   const box = $('#match-box'), video = $('#preview');
   if (r.score >= settings.threshold - 0.2 && video.videoWidth) {
@@ -244,6 +245,7 @@ async function testImage(blob, name = String(Date.now()), options) {
 }
 window.arrivalTestImage = testImage; // used by automated checks
 
+document.querySelectorAll('[data-debug]').forEach(el => { el.hidden = !DEBUG; });
 bindSettings();
 renderSettings();
 save();
