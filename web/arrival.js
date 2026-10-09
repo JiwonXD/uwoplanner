@@ -200,15 +200,18 @@ $('#log-clear').onclick = () => { log.length = 0; renderLog(); };
 function unlockAudio() {
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { /* no audio */ }
 }
-// One synthesised note: oscillator -> optional low-pass -> envelope -> output.
-function note(out, { type = 'sine', freq, at, dur, attack = 0.01, level = 1, lowpass }) {
-  const osc = audio.createOscillator(), gain = audio.createGain();
+// One synthesised note: oscillator (optional vibrato) -> optional low-pass -> envelope -> output.
+// `sustain` holds the level after the attack before the release ramp that ends at `dur`.
+function note(out, { type = 'sine', freq, at, dur, attack = 0.01, sustain = 0, level = 1, lowpass, vibrato, ctx = audio }) {
+  const osc = ctx.createOscillator(), gain = ctx.createGain();
   osc.type = type; osc.frequency.value = freq;
+  if (vibrato) { const lfo = ctx.createOscillator(), depth = ctx.createGain(); lfo.frequency.value = vibrato.rate; depth.gain.value = vibrato.depth; lfo.connect(depth).connect(osc.frequency); lfo.start(at); lfo.stop(at + dur + 0.05); }
   gain.gain.setValueAtTime(0.0001, at);
   gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, level), at + attack);
+  if (sustain) gain.gain.setValueAtTime(Math.max(0.0001, level), at + attack + sustain);
   gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
   let node = osc;
-  if (lowpass) { const f = audio.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; node = osc.connect(f); }
+  if (lowpass) { const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; f.Q.value = 0.7; node = osc.connect(f); }
   node.connect(gain).connect(out); osc.start(at); osc.stop(at + dur + 0.05);
 }
 // Eight alert sounds with distinct characters: four CC0 recordings from Kenney's Interface Sounds
@@ -218,10 +221,18 @@ const TONES = {
   melody: { label: '확인 멜로디', file: './sounds/confirmation_002.ogg', length: 1.0 },
   glass: { label: '유리 딩', file: './sounds/glass_004.ogg', length: 0.8 },
   low: { label: '낮은 톤', file: './sounds/question_004.ogg', length: 0.5 },
-  chime: { label: '차임 3음', length: 0.9, play(out, t) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8 })); } },
-  beep: { label: '기본 비프', length: 0.3, play(out, t) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.005, level: 0.7 }); } },
-  sharp: { label: '날카로운 비프', length: 0.25, play(out, t) { note(out, { type: 'square', freq: 1200, at: t, dur: 0.15, attack: 0.005, level: 0.25 }); } },
-  horn: { label: '뱃고동', length: 1.4, play(out, t) { note(out, { type: 'sawtooth', freq: 110, at: t, dur: 1.2, attack: 0.12, level: 0.6, lowpass: 420 }); note(out, { type: 'sawtooth', freq: 165, at: t, dur: 1.2, attack: 0.12, level: 0.35, lowpass: 520 }); } },
+  chime: { label: '차임 3음', length: 0.9, play(out, t, ctx) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8, ctx })); } },
+  beep: { label: '기본 비프', length: 0.35, play(out, t, ctx) { note(out, { freq: 880, at: t, dur: 0.28, attack: 0.005, sustain: 0.1, level: 0.9, ctx }); note(out, { freq: 1760, at: t, dur: 0.22, attack: 0.005, level: 0.35, ctx }); note(out, { type: 'triangle', freq: 440, at: t, dur: 0.28, attack: 0.005, sustain: 0.1, level: 0.4, ctx }); } },
+  sharp: { label: '날카로운 비프', length: 0.45, play(out, t, ctx) { for (let i = 0; i < 2; i++) note(out, { type: 'square', freq: 1200, at: t + i * 0.2, dur: 0.16, attack: 0.004, sustain: 0.09, level: 0.5, ctx }); } },
+  horn: { label: '뱃고동', length: 2.4, play(out, t, ctx) {
+    // Stacked low partials with a slow swell, vibrato and a long tail, like a large ship horn.
+    const vib = { rate: 5.5, depth: 2.5 }, body = { type: 'sawtooth', at: t, dur: 2.3, attack: 0.35, sustain: 1.1, vibrato: vib, ctx };
+    note(out, { ...body, freq: 98, level: 0.75, lowpass: 700 });
+    note(out, { ...body, freq: 147, level: 0.5, lowpass: 900 });
+    note(out, { ...body, freq: 196, level: 0.38, lowpass: 1400 });
+    note(out, { ...body, type: 'square', freq: 294, level: 0.15, lowpass: 1800 });
+    note(out, { ...body, type: 'sine', freq: 392, level: 0.22 });
+  } },
 };
 const buffers = new Map(); // decoded file tones, loaded on demand and cached
 async function loadBuffer(url) {
@@ -232,21 +243,47 @@ async function loadBuffer(url) {
   return promise;
 }
 function preloadTone(key = settings.tone) { const tone = TONES[key]; if (tone?.file && audio) loadBuffer(tone.file).catch(() => {}); }
+const FILE_GAIN = 1.8; // the CC0 recordings are mastered quieter than the synthesised tones
+// Output chain shared by every tone: volume -> gentle compressor -> limiter (loud without clipping).
+function outputChain(ctx, volume) {
+  const master = ctx.createGain(); master.gain.value = Math.max(0, Math.min(1, volume));
+  const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -12; comp.knee.value = 20; comp.ratio.value = 4; comp.attack.value = 0.003; comp.release.value = 0.2;
+  const limiter = ctx.createDynamicsCompressor(); limiter.threshold.value = -4; limiter.knee.value = 0; limiter.ratio.value = 20; limiter.attack.value = 0.001; limiter.release.value = 0.1;
+  master.connect(comp).connect(limiter).connect(ctx.destination);
+  return master;
+}
+function fileSource(ctx, buffer, out) {
+  const src = ctx.createBufferSource(), gain = ctx.createGain();
+  src.buffer = buffer; gain.gain.value = FILE_GAIN; src.connect(gain).connect(out);
+  return src;
+}
+async function scheduleTone(ctx, out, tone, start, times) {
+  if (tone.file) {
+    const buffer = await loadBuffer(tone.file);
+    const gap = Math.max(tone.length, buffer.duration) + 0.25;
+    for (let n = 0; n < times; n++) fileSource(ctx, buffer, out).start(start + n * gap);
+    return;
+  }
+  for (let n = 0; n < times; n++) tone.play(out, start + n * (tone.length + 0.25), ctx);
+}
 async function playChime(repeat = settings.repeat, volume = settings.volume, toneKey = settings.tone) {
   unlockAudio(); if (!audio) return;
   const tone = TONES[toneKey] || TONES.chime;
-  const master = audio.createGain(); master.gain.value = Math.max(0, Math.min(1, volume)); master.connect(audio.destination);
   const times = Math.max(1, repeat);
-  if (tone.file) {
-    let buffer;
-    try { buffer = await loadBuffer(tone.file); } catch { return playChime(repeat, volume, 'chime'); } // fall back to a synthesised tone
-    const start = audio.currentTime + 0.05, gap = Math.max(tone.length, buffer.duration) + 0.25;
-    for (let n = 0; n < times; n++) { const src = audio.createBufferSource(); src.buffer = buffer; src.connect(master); src.start(start + n * gap); }
-    return;
-  }
-  const start = audio.currentTime + 0.05;
-  for (let n = 0; n < times; n++) tone.play(master, start + n * (tone.length + 0.25));
+  try { await scheduleTone(audio, outputChain(audio, volume), tone, audio.currentTime + 0.05, times); }
+  catch { if (tone.file) playChime(repeat, volume, 'chime'); } // missing file: fall back to a synthesised tone
 }
+// Renders one pass of a tone offline and reports its loudness (used by automated checks).
+window.arrivalMeasureTone = async key => {
+  const tone = TONES[key]; if (!tone) return null;
+  const ctx = new OfflineAudioContext(1, Math.ceil(48000 * (tone.length + 0.3)), 48000);
+  if (tone.file) { const bytes = await (await fetch(tone.file)).arrayBuffer(); const buffer = await ctx.decodeAudioData(bytes); fileSource(ctx, buffer, outputChain(ctx, 1)).start(0); }
+  else tone.play(outputChain(ctx, 1), 0.02, ctx);
+  const data = (await ctx.startRendering()).getChannelData(0);
+  let peak = 0, sum = 0, n = 0;
+  for (let i = 0; i < data.length; i++) { const v = Math.abs(data[i]); if (v > peak) peak = v; if (v > 0.01) { sum += v * v; n++; } }
+  return { key, peak: +peak.toFixed(3), rms: +Math.sqrt(sum / Math.max(1, n)).toFixed(3), seconds: +(n / 48000).toFixed(2) };
+};
 // Tone picker: one button per sound; pressing a button selects it and plays it once.
 const toneGrid = $('#tone-grid');
 toneGrid.innerHTML = Object.entries(TONES).map(([key, tone]) => `<button type="button" role="radio" data-tone="${key}" aria-checked="false">${tone.label}</button>`).join('');
