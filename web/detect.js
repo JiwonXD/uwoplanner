@@ -80,7 +80,7 @@ function scoreAt(frame, st, x, y) {
   for (let i = 0; i < st.other.length; i += 2) c += mask[(y + st.other[i + 1]) * width + x + st.other[i]];
   a /= st.textPts.length / 2; exact /= st.textPts.length / 2; b /= st.ringPts.length / 2; c /= st.other.length / 2;
   let score = a - b - c;
-  if (exact < 0.6) score = Math.min(score, exact);
+  if (exact < 0.5) score = Math.min(score, exact);
   return { score, a, b, c, exact };
 }
 
