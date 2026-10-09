@@ -223,7 +223,7 @@ const TONES = {
   sharp: { label: '날카로운 비프', length: 0.45, play(out, t, ctx) { for (let i = 0; i < 2; i++) note(out, { type: 'square', freq: 1200, at: t + i * 0.2, dur: 0.16, attack: 0.004, sustain: 0.09, level: 0.7, ctx }); } },
   // The next three follow the single-oscillator beeps of popular timer sites: fixed pitch, instant start, exponential decay.
   beep: { label: '기본 비프', length: 0.3, play(out, t, ctx) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.003, level: 1, ctx }); } },
-  retro: { label: '레트로', length: 0.2, play(out, t, ctx) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.003, level: 1, ctx }); } },
+  retro: { label: '레트로', length: 0.2, play(out, t, ctx) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.003, level: 1.05, ctx }); } },
   soft: { label: '부드러운', length: 0.4, play(out, t, ctx) { note(out, { freq: 520, at: t, dur: 0.3, attack: 0.003, level: 1, ctx }); } },
   gull: { label: '갈매기', length: 0.75, play(out, t, ctx) { gullCry(out, t, 1, ctx); gullCry(out, t + 0.34, 0.97, ctx); } },
 };
