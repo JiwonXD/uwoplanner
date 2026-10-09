@@ -5,7 +5,7 @@
     "source_url": "https://uwo-fleet-simulator.web.app/",
     "page_version": "260913_1137",
     "snapshot_generated_at_utc": "2026-09-02T11:11:00Z",
-    "imported_at_utc": "2026-09-14T13:24:38.411299+00:00",
+    "imported_at_utc": "2026-10-09T14:20:48.651785+00:00",
     "source_mode": "static_snapshot_with_public_live_supplement",
     "files": [
       {
@@ -43,11 +43,43 @@
     ],
     "supplement": {
       "source_url": "https://firestore.googleapis.com/v1/projects/uwo-services-by-astraeus/databases/(default)/documents/mates/all",
-      "source_updated_at": "2026-09-09T04:19:15.028632Z",
-      "retrieved_at": "2026-09-14T13:23:47.276128+00:00",
+      "source_updated_at": "2026-10-08T18:54:08.695904Z",
+      "retrieved_at": "2026-10-09T14:20:48.377960+00:00",
+      "corrections": [
+        {
+          "name": "하이델룬",
+          "field": "effects[2]",
+          "source_text": "신출귀몰신",
+          "corrected_text": "신출귀몰",
+          "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+        },
+        {
+          "name": "하이델룬",
+          "field": "effects[3]",
+          "source_text": "기회 포착착",
+          "corrected_text": "기회 포착",
+          "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+        },
+        {
+          "name": "하이델룬",
+          "field": "effects[12]",
+          "source_text": "임전태세임",
+          "corrected_text": "임전태세",
+          "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+        },
+        {
+          "name": "칼릭스",
+          "field": "effects[4]",
+          "source_text": "총포류 거래 전문류",
+          "corrected_text": "총포류 거래 전문",
+          "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+        }
+      ],
       "names": [
         "멜라티",
-        "제임스 랭커스터"
+        "제임스 랭커스터",
+        "칼릭스",
+        "하이델룬"
       ]
     }
   },
@@ -47202,6 +47234,140 @@
           "value": 0.2,
           "unit": "percent",
           "scope": "adventure"
+        }
+      ],
+      "supplementary_source": {},
+      "source": "public_live_supplement"
+    },
+    {
+      "id": "navigator_972693506f62208a6d95",
+      "name": "하이델룬",
+      "grade": "S+",
+      "type": "전투",
+      "job": "아델룬 부대장",
+      "stats": {
+        "심미학": 134,
+        "박물학": 191,
+        "백병술": 227,
+        "교환 전략": 68,
+        "포격술": 466,
+        "협상 전략": 82,
+        "구매 전략": 103,
+        "충파술": 373,
+        "판매 전략": 46,
+        "척후법": 148,
+        "보급법": 186,
+        "지원술": 224
+      },
+      "stat_basis": null,
+      "portrait_id": "",
+      "languages": [
+        {
+          "level": 5,
+          "name": "도이치어"
+        },
+        {
+          "level": 2,
+          "name": "에스파냐어"
+        }
+      ],
+      "hire_condition": "스텝업",
+      "innate": [
+        {
+          "name": "베라모드 살상력 Ⅰ",
+          "category": "추가 치명타 피해량",
+          "description": "추가 포격 치명타 피해량이 0.3% 증가합니다.",
+          "unit": "percent",
+          "value": 0.3,
+          "mode": "combat",
+          "target": "포격"
+        }
+      ],
+      "admiral_commands": [
+        {
+          "description": "아군 전체의 내구도를 30% 회복시킵니다.",
+          "resource": "사기",
+          "cost": 50,
+          "name": "전장 검토",
+          "type": "전투"
+        },
+        {
+          "cost": 70,
+          "name": "집념의 추적",
+          "description": "3턴 동안 아군 전체의 포격 사거리를 1 증가시킵니다.\n추가로, 포격 공격이 치명타로 적중하며 직접적으로 가하는 포격 피해와 추가 포격 치명타 피해를 각각 27.5% 증가시키고, 추가 기동력을 7.5% 증가시킵니다.\n(포격 사거리는 최대 사거리까지만 증가합니다.)",
+          "type": "전투",
+          "resource": "사기"
+        },
+        {
+          "name": "훈련된 안목",
+          "type": "교역",
+          "resource": "행동력",
+          "description": "10분 동안 총포류 판매 수익이 13.7% 증가합니다.",
+          "cost": 20
+        },
+        {
+          "type": "전투",
+          "description": "3턴 동안 적 전체의 받는 포격 피해를 55% 증가시키고, 추가 기동력을 25% 감소시킵니다.\n추가로 3턴 동안 매 턴 최대 내구도의 20% 만큼의 피해를 가합니다.\n(매 턴 내구도 최대 피해량 : 1500)",
+          "name": "새틀라이트 어택",
+          "resource": "사기",
+          "cost": 50
+        }
+      ],
+      "job_effects": [],
+      "supplementary_source": {},
+      "source": "public_live_supplement"
+    },
+    {
+      "id": "navigator_2089aca33aa5582a26fe",
+      "name": "칼릭스",
+      "grade": "S",
+      "type": "교역",
+      "job": "회계사",
+      "stats": {
+        "심미학": 173,
+        "박물학": 203,
+        "백병술": 37,
+        "교환 전략": 337,
+        "포격술": 104,
+        "협상 전략": 162,
+        "구매 전략": 185,
+        "충파술": 59,
+        "판매 전략": 119,
+        "척후법": 135,
+        "보급법": 145,
+        "지원술": 86
+      },
+      "stat_basis": null,
+      "portrait_id": "",
+      "languages": [
+        {
+          "name": "에스파냐어",
+          "level": 5
+        },
+        {
+          "name": "네덜란드어",
+          "level": 3
+        }
+      ],
+      "hire_condition": "오렐리 인연 연대기 완료",
+      "innate": [
+        {
+          "mode": "trade",
+          "name": "집사 세 달 차",
+          "description": "공업품 판매 할증이 0.4% 증가합니다.",
+          "target": "공업품",
+          "category": "판매 할증",
+          "value": 0.4,
+          "unit": "percent"
+        }
+      ],
+      "admiral_commands": [],
+      "job_effects": [
+        {
+          "name": "협상 발생 확률",
+          "value": 0.2,
+          "unit": "percent",
+          "scope": "trade"
         }
       ],
       "supplementary_source": {},
@@ -190821,6 +190987,398 @@
       "active": null,
       "activation_rule": "skill_available",
       "raw_text": "공격력 증가 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_bc21e622f7f25c32a2ef",
+      "slot_index": 0,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 공격력 증폭",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_df16f3a18e1f8999fe40",
+      "slot_index": 1,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 치명타 추가 피해",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_46cacedc6c2f56180955",
+      "slot_index": 2,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "신출귀몰",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_b913e979c571c3a799dc",
+      "slot_index": 3,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "기회 포착",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_8b81d974d97c1ab4f7bd",
+      "slot_index": 4,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "혼란 포격",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_15318971a1087f9f9af0",
+      "slot_index": 5,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 피해 무시",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_0dc81e04dc4179e6dbdf",
+      "slot_index": 6,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 시 추가 고정 피해",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_32a397ef8894ff1e4553",
+      "slot_index": 7,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "방어 무시 포격 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_c4fec20bd2a105e32edd",
+      "slot_index": 8,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "대혼란 포격",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_ec5c10e78ee257428c5c",
+      "slot_index": 9,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 공격력 증폭 심화",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "effect_06f65626a6839bbc0a89",
+      "slot_index": 12,
+      "kind": "effect",
+      "origin": "transcendence_3",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "third_transcendence_completed",
+      "raw_text": "임전태세",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "skill_34bdb20a4cc97cdb0df7",
+      "slot_index": 0,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 1,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "정밀 포격: 혼란 유발",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_972693506f62208a6d95",
+      "ability_id": "skill_b9fe87ae951f6e1d7269",
+      "slot_index": 1,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 50,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "광역 포격: 싸움 유발 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_76f81797183c0a0b48b8",
+      "slot_index": 0,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "포격 공격력 증가",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_29720266eb9d1745d428",
+      "slot_index": 1,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 10,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "공업품 거래 전문",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_0eafc61f57a021156c98",
+      "slot_index": 2,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "관찰 공부",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_1bffd78e2bd6c95e6dce",
+      "slot_index": 3,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 30,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "뛰어난 협상",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_c645e5c8d1239eb3b967",
+      "slot_index": 4,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "총포류 거래 전문",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_7e626d04ed9e3d6c4c54",
+      "slot_index": 5,
+      "kind": "effect",
+      "origin": "job",
+      "unlock_level": 50,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "공업품 구매 할인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_8e78424568063e3b20e8",
+      "slot_index": 6,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "시작 시 상급 수리",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_d51d4bd0cb4b6b9cbc7b",
+      "slot_index": 7,
+      "kind": "effect",
+      "origin": "character",
+      "unlock_level": 70,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "바가지의 달인 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_7050616692a8042ff805",
+      "slot_index": 8,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "공업품 판매 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_8b782ea9f63233edee5e",
+      "slot_index": 9,
+      "kind": "effect",
+      "origin": "potential",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "미술품 판매 달인",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_ac8409cdb7c2feda2814",
+      "slot_index": 10,
+      "kind": "effect",
+      "origin": "relationship",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "selected_and_equipped",
+      "raw_text": "주류 판매 특별 할증",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "effect_098e290c8681bc33223b",
+      "slot_index": 12,
+      "kind": "effect",
+      "origin": "transcendence_3",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "third_transcendence_completed",
+      "raw_text": "공업품 교환 우대",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "skill_d3061fbe258e0ef558bc",
+      "slot_index": 0,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 1,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "정화: 전투태세",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "skill_cc4f8bc0b8ea25e67343",
+      "slot_index": 1,
+      "kind": "skill",
+      "origin": "level_skill",
+      "unlock_level": 50,
+      "level": 2,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "행동 봉쇄 LV2",
+      "alias_applied": false
+    },
+    {
+      "navigator_id": "navigator_2089aca33aa5582a26fe",
+      "ability_id": "skill_a3ce413188b15c51d591",
+      "slot_index": 2,
+      "kind": "skill",
+      "origin": "relationship",
+      "unlock_level": null,
+      "level": 1,
+      "level_basis": "reference_simulator_splitLevel",
+      "active": null,
+      "activation_rule": "skill_available",
+      "raw_text": "백병: 화마 유발",
       "alias_applied": false
     }
   ],

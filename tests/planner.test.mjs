@@ -90,8 +90,8 @@ test('real source honors global slot limits and provides requested four effect t
 });
 test('catalog includes both latest navigators with complete linked grants and LV2 values',async()=>{
   const raw=JSON.parse(await readFile(new URL('../data/simulator/catalog.json',import.meta.url),'utf8'));
-  assert.equal(raw.navigators.length,642);
-  assert.equal(new Set(raw.navigators.map(n=>n.id)).size,642);
+  assert.equal(raw.navigators.length,644);
+  assert.equal(new Set(raw.navigators.map(n=>n.id)).size,644);
   const defs=new Map(raw.abilities.map(a=>[a.id,a]));
   for(const [name,job,effect,stat,value] of [['멜라티','방적상','직물 판매 할증','판매 전략',380],['제임스 랭커스터','갑판장','탐사의 기본','척후법',406]]){
     const n=raw.navigators.find(n=>n.name===name);assert.ok(n);assert.equal(n.job,job);assert.equal(n.grade,'S');

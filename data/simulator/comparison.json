@@ -1,10 +1,10 @@
 {
   "counts": {
-    "navigators": 642,
+    "navigators": 644,
     "effects_with_definitions": 526,
     "skills_with_definitions": 104,
-    "effect_grants": 6677,
-    "skill_grants": 1326
+    "effect_grants": 6700,
+    "skill_grants": 1331
   },
   "added_navigators": [
     "루이즈 드보주아외",
@@ -14,6 +14,8 @@
     "안토니오 말라테스타",
     "자코모 데캄파니아",
     "제임스 랭커스터",
+    "칼릭스",
+    "하이델룬",
     "헬렌 라즈베리"
   ],
   "excel_only_navigators": [],
