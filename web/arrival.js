@@ -1,7 +1,7 @@
 const $ = s => document.querySelector(s);
 const KEY = 'uwo-arrival-settings';
 const SETTINGS_VERSION = 2;
-const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, volume: 0.6, repeat: 3, discord: false, webhook: '',
+const DEFAULTS = { threshold: 0.8, cooldown: 90, sound: true, tone: 'chime', volume: 0.6, repeat: 3, discord: false, webhook: '',
   message: '⚓ {place}에 도착했어요! ({time})' };
 const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts immediately (negatives measured at or below 0.55)
 const MIN_FRAME_GAP = 600; // ms between frames handed to the worker; arrival screens stay up for seconds, so ~1.5 checks/s is plenty
@@ -198,18 +198,34 @@ $('#log-clear').onclick = () => { log.length = 0; renderLog(); };
 function unlockAudio() {
   try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { /* no audio */ }
 }
-function playChime(repeat = settings.repeat, volume = settings.volume) {
-  unlockAudio(); if (!audio) return;
-  const start = audio.currentTime + 0.05;
-  for (let n = 0; n < Math.max(1, repeat); n++) {
-    [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, offset]) => {
-      const t = start + n * 1.1 + offset, osc = audio.createOscillator(), gain = audio.createGain();
-      osc.type = 'sine'; osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, t); gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, volume), t + 0.02); gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
-      osc.connect(gain).connect(audio.destination); osc.start(t); osc.stop(t + 0.45);
-    });
-  }
+// One synthesised note: oscillator -> optional low-pass -> envelope -> output.
+function note(out, { type = 'sine', freq, at, dur, attack = 0.01, level = 1, lowpass }) {
+  const osc = audio.createOscillator(), gain = audio.createGain();
+  osc.type = type; osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0.0001, at);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, level), at + attack);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+  let node = osc;
+  if (lowpass) { const f = audio.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = lowpass; node = osc.connect(f); }
+  node.connect(gain).connect(out); osc.start(at); osc.stop(at + dur + 0.05);
 }
+const TONES = {
+  chime: { label: '차임 (기본)', length: 0.9, play(out, t) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8 })); } },
+  bell: { label: '종소리', length: 1.5, play(out, t) { [[1047, 0.9], [2093, 0.3], [3136, 0.12]].forEach(([freq, level]) => note(out, { freq, at: t, dur: 1.4, attack: 0.005, level })); } },
+  dingdong: { label: '딩동', length: 1.1, play(out, t) { note(out, { freq: 784, at: t, dur: 0.5, level: 0.8 }); note(out, { freq: 523, at: t + 0.45, dur: 0.6, level: 0.8 }); } },
+  beep: { label: '삑삑', length: 0.8, play(out, t) { for (let i = 0; i < 3; i++) note(out, { type: 'square', freq: 1000, at: t + i * 0.22, dur: 0.12, attack: 0.005, level: 0.25 }); } },
+  horn: { label: '뱃고동', length: 1.4, play(out, t) { note(out, { type: 'sawtooth', freq: 110, at: t, dur: 1.2, attack: 0.12, level: 0.6, lowpass: 420 }); note(out, { type: 'sawtooth', freq: 165, at: t, dur: 1.2, attack: 0.12, level: 0.35, lowpass: 520 }); } },
+  alarm: { label: '경보', length: 1.3, play(out, t) { for (let i = 0; i < 4; i++) note(out, { type: 'square', freq: i % 2 ? 700 : 900, at: t + i * 0.3, dur: 0.26, attack: 0.01, level: 0.22 }); } },
+};
+function playChime(repeat = settings.repeat, volume = settings.volume, toneKey = settings.tone) {
+  unlockAudio(); if (!audio) return;
+  const tone = TONES[toneKey] || TONES.chime;
+  const master = audio.createGain(); master.gain.value = Math.max(0, Math.min(1, volume)); master.connect(audio.destination);
+  const start = audio.currentTime + 0.05;
+  for (let n = 0; n < Math.max(1, repeat); n++) tone.play(master, start + n * (tone.length + 0.25));
+}
+const toneSelect = $('#tone');
+toneSelect.innerHTML = Object.entries(TONES).map(([key, tone]) => `<option value="${key}">${tone.label}</option>`).join('');
 $('#sound-test').onclick = () => playChime(1);
 
 async function sendDiscord(content) {

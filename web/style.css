@@ -327,6 +327,7 @@ body.busy #collection input,body.busy #collection .collection-bulk button,body.b
 .setting-group .hint{margin:4px 0 10px}
 .settings-panel input[type=range]{width:100%}
 .settings-panel input[type=number]{width:80px}
+.settings-panel select{width:100%;margin-bottom:10px}
 .settings-panel input[type=url],.settings-panel input[type=text],.settings-panel input[type=password]{width:100%;margin-bottom:6px}
 .secret-field{display:flex;gap:8px;align-items:flex-start}
 .secret-field input{flex:1}
