@@ -225,24 +225,25 @@ const TONES = {
   beep: { label: '기본 비프', length: 0.3, play(out, t, ctx) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.003, level: 1, ctx }); } },
   retro: { label: '레트로', length: 0.2, play(out, t, ctx) { note(out, { type: 'sawtooth', freq: 660, at: t, dur: 0.1, attack: 0.003, level: 1, ctx }); } },
   soft: { label: '부드러운', length: 0.4, play(out, t, ctx) { note(out, { freq: 520, at: t, dur: 0.3, attack: 0.003, level: 1, ctx }); } },
-  gull: { label: '갈매기', length: 1.5, play(out, t, ctx) { [[0, 1], [0.42, 0.94], [0.84, 1.07]].forEach(([o, m]) => gullCry(out, t + o, m, ctx)); } },
+  gull: { label: '갈매기', length: 0.75, play(out, t, ctx) { gullCry(out, t, 1, ctx); gullCry(out, t + 0.34, 0.97, ctx); } },
 };
-// One seagull cry ("kee-aw"): a nasal sawtooth that leaps up then slides down, with a fast flutter.
+// One seagull "끼룩", shaped after a reference recording: a 0.15s cry whose pitch rises from
+// about 1150Hz to 1270Hz and settles back below 1100Hz, slightly reedy, with a soft onset.
 function gullCry(out, at, pitch, ctx) {
-  const osc = ctx.createOscillator(), band = ctx.createBiquadFilter(), gain = ctx.createGain();
+  const osc = ctx.createOscillator(), tone = ctx.createBiquadFilter(), gain = ctx.createGain();
   osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(950 * pitch, at);
-  osc.frequency.exponentialRampToValueAtTime(2300 * pitch, at + 0.07);
-  osc.frequency.exponentialRampToValueAtTime(1700 * pitch, at + 0.2);
-  osc.frequency.exponentialRampToValueAtTime(1050 * pitch, at + 0.36);
-  const lfo = ctx.createOscillator(), depth = ctx.createGain(); lfo.frequency.value = 28; depth.gain.value = 70 * pitch; lfo.connect(depth).connect(osc.frequency);
-  band.type = 'bandpass'; band.frequency.value = 1900 * pitch; band.Q.value = 1.4;
+  osc.frequency.setValueAtTime(1140 * pitch, at);
+  osc.frequency.linearRampToValueAtTime(1270 * pitch, at + 0.06);
+  osc.frequency.linearRampToValueAtTime(1180 * pitch, at + 0.1);
+  osc.frequency.linearRampToValueAtTime(1050 * pitch, at + 0.15);
+  tone.type = 'lowpass'; tone.frequency.value = 3200; tone.Q.value = 1.2;
   gain.gain.setValueAtTime(0.0001, at);
-  gain.gain.exponentialRampToValueAtTime(1.3, at + 0.03);
-  gain.gain.setValueAtTime(1.3, at + 0.2);
-  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.38);
-  osc.connect(band).connect(gain).connect(out);
-  osc.start(at); lfo.start(at); osc.stop(at + 0.42); lfo.stop(at + 0.42);
+  gain.gain.exponentialRampToValueAtTime(0.55, at + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.75, at + 0.07);
+  gain.gain.exponentialRampToValueAtTime(0.4, at + 0.12);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.17);
+  osc.connect(tone).connect(gain).connect(out);
+  osc.start(at); osc.stop(at + 0.2);
 }
 const buffers = new Map(); // decoded file tones, loaded on demand and cached
 async function loadBuffer(url) {
