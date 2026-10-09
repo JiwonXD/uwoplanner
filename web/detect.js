@@ -80,7 +80,7 @@ function scoreAt(frame, st, x, y) {
   for (let i = 0; i < st.other.length; i += 2) c += mask[(y + st.other[i + 1]) * width + x + st.other[i]];
   a /= st.textPts.length / 2; exact /= st.textPts.length / 2; b /= st.ringPts.length / 2; c /= st.other.length / 2;
   let score = a - b - c;
-  if (exact < 0.5) score = Math.min(score, exact);
+  if (exact < st.exactGate) score = Math.min(score, exact);
   return { score, a, b, c, exact };
 }
 
@@ -97,6 +97,7 @@ export function detect(frame, tpl, options = {}) {
   const step = options.step || 2;
   const minA = options.minA ?? 0.7;
   const minScore = options.minScore ?? 0.5; // sampled (text - ring) estimate needed before a full evaluation
+  const exactGate = options.exactGate ?? 0.5; // below this, exact-position coverage caps the score
   const cache = options.cache || (options.cache = new Map());
   const area = integral(frame.dil, width, height);
   let best = { score: -1, a: 0, b: 0, c: 0, exact: 0, x: 0, y: 0, scale: 1 };
@@ -106,6 +107,7 @@ export function detect(frame, tpl, options = {}) {
   };
   for (const scale of scales) {
     let st = cache.get(scale); if (!st) cache.set(scale, st = scaleTemplate(tpl, scale));
+    st.exactGate = exactGate;
     if (st.w > width || st.h > height) continue;
     const need = minA * st.textPts.length / 2, sampleNeed = minA * st.sample.length / 2;
     for (let y = 0; y + st.h <= height; y += step) for (let x = 0; x + st.w <= width; x += step) {
@@ -123,7 +125,7 @@ export function detect(frame, tpl, options = {}) {
   // Refine around the best candidate with 1px steps and finer scales.
   const coarse = best;
   for (const scale of [coarse.scale - 0.025, coarse.scale, coarse.scale + 0.025]) {
-    const st = scaleTemplate(tpl, scale);
+    const st = scaleTemplate(tpl, scale); st.exactGate = exactGate;
     if (st.w > width || st.h > height) continue;
     for (let y = Math.max(0, coarse.y - 2); y <= Math.min(height - st.h, coarse.y + 2); y++)
       for (let x = Math.max(0, coarse.x - 2); x <= Math.min(width - st.w, coarse.x + 2); x++) consider(st, x, y);

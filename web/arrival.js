@@ -221,11 +221,11 @@ $('#test-files').onchange = async e => {
     box.insertAdjacentHTML('beforeend', `<div class="test-row ${r.score >= settings.threshold ? 'hit' : ''}"><span>${file.name}</span><b>${r.score >= 0 ? r.score.toFixed(2) : '오류'}</b><small>${r.name || ''} · ${r.frameWidth || '?'}×${r.frameHeight || '?'} · ${r.ms ?? '-'}ms</small></div>`);
   }
 };
-async function testImage(blob, name = String(Date.now())) {
+async function testImage(blob, name = String(Date.now()), options) {
   ensureWorker();
   const bmp = await createImageBitmap(blob);
   const id = `${name}#${Math.random().toString(36).slice(2)}`;
-  return new Promise(resolve => { testWaiters.set(id, resolve); worker.postMessage({ type: 'frame', image: bmp, ts: Date.now(), test: id }, [bmp]); });
+  return new Promise(resolve => { testWaiters.set(id, resolve); worker.postMessage({ type: 'frame', image: bmp, ts: Date.now(), test: id, options }, [bmp]); });
 }
 window.arrivalTestImage = testImage; // used by automated checks
 

@@ -22,6 +22,10 @@ test('template decodes to the recorded pixel counts', () => {
   assert.equal(text.reduce((a, b) => a + b, 0), template.textCount);
   assert.equal(ring.reduce((a, b) => a + b, 0), template.ringCount);
   assert.ok(template.textCount > 500 && template.ringCount > template.textCount);
+  for (const t of templates) {
+    assert.ok(t.luma >= 180 && t.luma <= 240 && t.sat > 0, `${t.name} thresholds`);
+    assert.ok(t.exactGate >= 0.4 && t.exactGate <= 0.7, `${t.name} exact gate`);
+  }
 });
 
 test('finds the text block at its true scale and position despite noise', () => {

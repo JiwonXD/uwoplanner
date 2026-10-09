@@ -23,11 +23,15 @@ self.onmessage = ({ data }) => {
       ctx = canvas.getContext('2d', { willReadFrequently: true });
     }
     ctx.drawImage(image, 0, 0, roiW, roiH, 0, 0, w, h);
-    const frame = brightMask(ctx.getImageData(0, 0, w, h).data, w, h);
+    const opts = data.options || {};
+    const rgba = ctx.getImageData(0, 0, w, h).data;
+    const frames = new Map(); // one bright mask per distinct (luma, sat) pair
     let best = { score: -1, name: null };
     for (const tpl of templates) {
+      const luma = opts.luma ?? tpl.luma ?? 215, sat = opts.sat ?? tpl.sat ?? 50, key = `${luma}/${sat}`;
+      let frame = frames.get(key); if (!frame) frames.set(key, frame = brightMask(rgba, w, h, luma, sat));
       let cache = caches.get(tpl.name); if (!cache) caches.set(tpl.name, cache = new Map());
-      const r = detect(frame, tpl, { cache, scales: SCALES });
+      const r = detect(frame, tpl, { cache, scales: SCALES, exactGate: opts.exactGate ?? tpl.exactGate, minScore: opts.minScore });
       if (r.score > best.score) best = { ...r, name: tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale };
     }
     self.postMessage({ type: 'result', ts: data.ts, test: data.test, name: best.name, score: best.score, a: best.a, b: best.b, c: best.c, exact: best.exact,
