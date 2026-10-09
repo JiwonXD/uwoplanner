@@ -3,7 +3,7 @@
   "source_url": "https://uwo-fleet-simulator.web.app/",
   "page_version": "260913_1137",
   "snapshot_generated_at_utc": "2026-09-02T11:11:00Z",
-  "imported_at_utc": "2026-09-14T13:24:38.411299+00:00",
+  "imported_at_utc": "2026-10-09T14:20:48.651785+00:00",
   "source_mode": "static_snapshot_with_public_live_supplement",
   "files": [
     {
@@ -41,11 +41,43 @@
   ],
   "supplement": {
     "source_url": "https://firestore.googleapis.com/v1/projects/uwo-services-by-astraeus/databases/(default)/documents/mates/all",
-    "source_updated_at": "2026-09-09T04:19:15.028632Z",
-    "retrieved_at": "2026-09-14T13:23:47.276128+00:00",
+    "source_updated_at": "2026-10-08T18:54:08.695904Z",
+    "retrieved_at": "2026-10-09T14:20:48.377960+00:00",
+    "corrections": [
+      {
+        "name": "하이델룬",
+        "field": "effects[2]",
+        "source_text": "신출귀몰신",
+        "corrected_text": "신출귀몰",
+        "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+      },
+      {
+        "name": "하이델룬",
+        "field": "effects[3]",
+        "source_text": "기회 포착착",
+        "corrected_text": "기회 포착",
+        "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+      },
+      {
+        "name": "하이델룬",
+        "field": "effects[12]",
+        "source_text": "임전태세임",
+        "corrected_text": "임전태세",
+        "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+      },
+      {
+        "name": "칼릭스",
+        "field": "effects[4]",
+        "source_text": "총포류 거래 전문류",
+        "corrected_text": "총포류 거래 전문",
+        "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+      }
+    ],
     "names": [
       "멜라티",
-      "제임스 랭커스터"
+      "제임스 랭커스터",
+      "칼릭스",
+      "하이델룬"
     ]
   }
 }

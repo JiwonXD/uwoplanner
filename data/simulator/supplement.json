@@ -1,7 +1,7 @@
 {
   "source_url": "https://firestore.googleapis.com/v1/projects/uwo-services-by-astraeus/databases/(default)/documents/mates/all",
-  "source_updated_at": "2026-09-09T04:19:15.028632Z",
-  "retrieved_at": "2026-09-14T13:23:47.276128+00:00",
+  "source_updated_at": "2026-10-08T18:54:08.695904Z",
+  "retrieved_at": "2026-10-09T14:20:48.377960+00:00",
   "mates": [
     {
       "name": "멜라티",
@@ -127,6 +127,192 @@
         "supply": 124,
         "support": 108
       }
+    },
+    {
+      "name": "하이델룬",
+      "grade": "S+",
+      "type": "전투",
+      "job": "아델룬 부대장",
+      "portraitId": "",
+      "effects": [
+        "포격 공격력 증폭",
+        "포격 치명타 추가 피해",
+        "신출귀몰",
+        "기회 포착",
+        "혼란 포격",
+        "포격 피해 무시",
+        "포격 시 추가 고정 피해",
+        "방어 무시 포격 LV2",
+        "대혼란 포격",
+        "포격 공격력 증폭 심화",
+        "",
+        "",
+        "임전태세"
+      ],
+      "skills": [
+        "정밀 포격: 혼란 유발",
+        "광역 포격: 싸움 유발 LV2",
+        ""
+      ],
+      "innate": [
+        {
+          "name": "베라모드 살상력 Ⅰ",
+          "category": "추가 치명타 피해량",
+          "description": "추가 포격 치명타 피해량이 0.3% 증가합니다.",
+          "unit": "percent",
+          "value": 0.3,
+          "mode": "combat",
+          "target": "포격"
+        }
+      ],
+      "admiralCommands": [
+        {
+          "description": "아군 전체의 내구도를 30% 회복시킵니다.",
+          "resource": "사기",
+          "cost": 50,
+          "name": "전장 검토",
+          "type": "전투"
+        },
+        {
+          "cost": 70,
+          "name": "집념의 추적",
+          "description": "3턴 동안 아군 전체의 포격 사거리를 1 증가시킵니다.\n추가로, 포격 공격이 치명타로 적중하며 직접적으로 가하는 포격 피해와 추가 포격 치명타 피해를 각각 27.5% 증가시키고, 추가 기동력을 7.5% 증가시킵니다.\n(포격 사거리는 최대 사거리까지만 증가합니다.)",
+          "type": "전투",
+          "resource": "사기"
+        },
+        {
+          "name": "훈련된 안목",
+          "type": "교역",
+          "resource": "행동력",
+          "description": "10분 동안 총포류 판매 수익이 13.7% 증가합니다.",
+          "cost": 20
+        },
+        {
+          "type": "전투",
+          "description": "3턴 동안 적 전체의 받는 포격 피해를 55% 증가시키고, 추가 기동력을 25% 감소시킵니다.\n추가로 3턴 동안 매 턴 최대 내구도의 20% 만큼의 피해를 가합니다.\n(매 턴 내구도 최대 피해량 : 1500)",
+          "name": "새틀라이트 어택",
+          "resource": "사기",
+          "cost": 50
+        }
+      ],
+      "langs": [
+        {
+          "level": 5,
+          "name": "도이치어"
+        },
+        {
+          "level": 2,
+          "name": "에스파냐어"
+        }
+      ],
+      "hireCondition": "스텝업",
+      "stats": {
+        "aesthetics": 134,
+        "archaeology": 191,
+        "boarding": 227,
+        "exchange": 68,
+        "gunnery": 466,
+        "negotiation": 82,
+        "purchase": 103,
+        "ramming": 373,
+        "sales": 46,
+        "scouting": 148,
+        "supply": 186,
+        "support": 224
+      }
+    },
+    {
+      "name": "칼릭스",
+      "grade": "S",
+      "type": "교역",
+      "job": "회계사",
+      "portraitId": "",
+      "effects": [
+        "포격 공격력 증가",
+        "공업품 거래 전문",
+        "관찰 공부",
+        "뛰어난 협상",
+        "총포류 거래 전문",
+        "공업품 구매 할인",
+        "시작 시 상급 수리",
+        "바가지의 달인 LV2",
+        "공업품 판매 달인",
+        "미술품 판매 달인",
+        "주류 판매 특별 할증",
+        "",
+        "공업품 교환 우대"
+      ],
+      "skills": [
+        "정화: 전투태세",
+        "행동 봉쇄 LV2",
+        "백병: 화마 유발"
+      ],
+      "innate": [
+        {
+          "mode": "trade",
+          "name": "집사 세 달 차",
+          "description": "공업품 판매 할증이 0.4% 증가합니다.",
+          "target": "공업품",
+          "category": "판매 할증",
+          "value": 0.4,
+          "unit": "percent"
+        }
+      ],
+      "langs": [
+        {
+          "name": "에스파냐어",
+          "level": 5
+        },
+        {
+          "name": "네덜란드어",
+          "level": 3
+        }
+      ],
+      "hireCondition": "오렐리 인연 연대기 완료",
+      "stats": {
+        "aesthetics": 173,
+        "archaeology": 203,
+        "boarding": 37,
+        "exchange": 337,
+        "gunnery": 104,
+        "negotiation": 162,
+        "purchase": 185,
+        "ramming": 59,
+        "sales": 119,
+        "scouting": 135,
+        "supply": 145,
+        "support": 86
+      }
+    }
+  ],
+  "corrections": [
+    {
+      "name": "하이델룬",
+      "field": "effects[2]",
+      "source_text": "신출귀몰신",
+      "corrected_text": "신출귀몰",
+      "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+    },
+    {
+      "name": "하이델룬",
+      "field": "effects[3]",
+      "source_text": "기회 포착착",
+      "corrected_text": "기회 포착",
+      "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+    },
+    {
+      "name": "하이델룬",
+      "field": "effects[12]",
+      "source_text": "임전태세임",
+      "corrected_text": "임전태세",
+      "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
+    },
+    {
+      "name": "칼릭스",
+      "field": "effects[4]",
+      "source_text": "총포류 거래 전문류",
+      "corrected_text": "총포류 거래 전문",
+      "reason": "원본 오타(마지막 글자 중복). 수정한 이름은 data.js 효과 정의에 존재함"
     }
   ]
 }
