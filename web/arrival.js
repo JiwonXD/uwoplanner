@@ -40,7 +40,6 @@ function bindSettings() {
     el.dataset.bound = '1';
     el.addEventListener(el.type === 'checkbox' || el.type === 'number' || el.tagName === 'SELECT' ? 'change' : 'input', () => {
       settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value.trim();
-      if (key === 'tone') { unlockAudio(); preloadTone(); }
       save(); renderSettings();
     });
   }
@@ -52,7 +51,7 @@ function renderSettings() {
 }
 $('#settings-reset').onclick = () => {
   if (!confirm('알림 설정을 기본값으로 되돌릴까요? 웹훅 URL도 지워져요.')) return;
-  Object.assign(settings, DEFAULTS); save(); bindSettings(); $('#discord-state').textContent = ''; renderSettings(); notice('설정을 기본값으로 되돌렸어요.');
+  Object.assign(settings, DEFAULTS); save(); bindSettings(); renderToneGrid(); $('#discord-state').textContent = ''; renderSettings(); notice('설정을 기본값으로 되돌렸어요.');
 };
 $('#webhook-toggle').onclick = () => {
   const input = $('#webhook'), show = input.type === 'password';
@@ -215,10 +214,10 @@ function note(out, { type = 'sine', freq, at, dur, attack = 0.01, level = 1, low
 // Eight alert sounds with distinct characters: four CC0 recordings from Kenney's Interface Sounds
 // (web/sounds, see LICENSE.txt there) and four synthesised tones in the style of popular timer sites.
 const TONES = {
-  confirm: { label: '확인음 (파일)', file: './sounds/confirmation_001.ogg', length: 0.6 },
-  melody: { label: '확인 멜로디 (파일)', file: './sounds/confirmation_002.ogg', length: 1.0 },
-  glass: { label: '유리 딩 (파일)', file: './sounds/glass_004.ogg', length: 0.8 },
-  low: { label: '낮은 톤 (파일)', file: './sounds/question_004.ogg', length: 0.5 },
+  confirm: { label: '확인음', file: './sounds/confirmation_001.ogg', length: 0.6 },
+  melody: { label: '확인 멜로디', file: './sounds/confirmation_002.ogg', length: 1.0 },
+  glass: { label: '유리 딩', file: './sounds/glass_004.ogg', length: 0.8 },
+  low: { label: '낮은 톤', file: './sounds/question_004.ogg', length: 0.5 },
   chime: { label: '차임 3음', length: 0.9, play(out, t) { [[880, 0], [1175, 0.18], [1568, 0.36]].forEach(([freq, o]) => note(out, { freq, at: t + o, dur: 0.45, attack: 0.02, level: 0.8 })); } },
   beep: { label: '기본 비프', length: 0.3, play(out, t) { note(out, { freq: 800, at: t, dur: 0.2, attack: 0.005, level: 0.7 }); } },
   sharp: { label: '날카로운 비프', length: 0.25, play(out, t) { note(out, { type: 'square', freq: 1200, at: t, dur: 0.15, attack: 0.005, level: 0.25 }); } },
@@ -248,8 +247,16 @@ async function playChime(repeat = settings.repeat, volume = settings.volume, ton
   const start = audio.currentTime + 0.05;
   for (let n = 0; n < times; n++) tone.play(master, start + n * (tone.length + 0.25));
 }
-$('#tone').innerHTML = Object.entries(TONES).map(([key, tone]) => `<option value="${key}">${tone.label}</option>`).join('');
-$('#sound-test').onclick = () => playChime(1);
+// Tone picker: one button per sound; pressing a button selects it and plays it once.
+const toneGrid = $('#tone-grid');
+toneGrid.innerHTML = Object.entries(TONES).map(([key, tone]) => `<button type="button" role="radio" data-tone="${key}" aria-checked="false">${tone.label}</button>`).join('');
+function renderToneGrid() { for (const b of toneGrid.children) b.setAttribute('aria-checked', b.dataset.tone === settings.tone ? 'true' : 'false'); }
+toneGrid.addEventListener('click', e => {
+  const button = e.target.closest('[data-tone]'); if (!button) return;
+  settings.tone = button.dataset.tone; save(); renderToneGrid();
+  unlockAudio(); preloadTone(); playChime(1);
+});
+$('#sound-test').onclick = () => playChime();
 
 async function sendDiscord(content) {
   if (!isDiscordUrl(settings.webhook)) { $('#discord-state').textContent = settings.webhook ? '디스코드 웹훅 URL 형식이 아니에요.' : '웹훅 URL을 입력해 주세요.'; return false; }
@@ -286,5 +293,6 @@ window.arrivalTestImage = testImage; // used by automated checks
 
 document.querySelectorAll('[data-debug]').forEach(el => { el.hidden = !DEBUG; });
 bindSettings();
+renderToneGrid();
 renderSettings();
 save();

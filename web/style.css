@@ -327,7 +327,7 @@ body.busy #collection input,body.busy #collection .collection-bulk button,body.b
 .setting-group .hint{margin:4px 0 10px}
 .settings-panel input[type=range]{width:100%}
 .settings-panel input[type=number]{width:80px}
-.settings-panel select{width:100%;margin-bottom:10px}
+.tone-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:6px 0 12px}.tone-grid button{min-height:38px;padding:6px 4px;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tone-grid [aria-checked=true]{background:var(--teal);border-color:var(--teal);color:#fff;font-weight:600}.field-label .hint{font-weight:400;margin-left:6px}@media(max-width:1100px){.tone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:900px){.tone-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}@media(max-width:480px){.tone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .settings-panel input[type=url],.settings-panel input[type=text],.settings-panel input[type=password]{width:100%;margin-bottom:6px}
 .secret-field{display:flex;gap:8px;align-items:flex-start}
 .secret-field input{flex:1}
