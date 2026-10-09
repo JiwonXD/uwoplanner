@@ -180,7 +180,7 @@ async function fireAlert(r) {
   const text = (settings.message || DEFAULTS.message).replaceAll('{place}', place).replaceAll('{time}', fmtTime(when));
   const entry = { when, place, score: r.score, channels: [] };
   detectCount++; $('#detect-count').textContent = detectCount;
-  log.unshift(entry); renderLog();
+  log.unshift(entry); renderLog(); $('#log-box').open = true;
   notice(`⚓ ${fmtTime(when)} ${place} 도착을 감지했어요.`);
   flashTitle(`⚓ ${place} 도착!`);
   if (settings.sound) { playChime(); entry.channels.push('소리'); }
@@ -190,7 +190,7 @@ async function fireAlert(r) {
 function renderLog() {
   const ul = $('#log');
   ul.innerHTML = log.length ? log.slice(0, 50).map(e => `<li><b>${fmtTime(e.when)}</b> ${e.place} 도착 · 유사도 ${e.score.toFixed(2)}${e.channels.length ? ` · ${e.channels.join(', ')}` : ''}</li>`).join('')
-    : '<li class="small hint">아직 감지된 도착이 없어요. 캡처를 시작하고 항해를 떠나 보세요.</li>';
+    : '<li class="small hint">아직 감지된 도착이 없어요.</li>';
 }
 $('#log-clear').onclick = () => { log.length = 0; renderLog(); };
 
