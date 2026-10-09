@@ -3,14 +3,14 @@ import { createHash } from 'node:crypto';
 const root = new URL('../', import.meta.url);
 const out = new URL('dist/', root);
 await mkdir(out, { recursive: true });
-const files=['index.html','style.css','app.js','model.js','solver.js','worker.js','favicon.svg'];
+const files=['index.html','style.css','app.js','model.js','solver.js','worker.js','favicon.svg','arrival.html','arrival.js','detect.js','detect-worker.js','arrival-template.js'];
 const sources=await Promise.all(files.map(file=>readFile(new URL(`web/${file}`,root),'utf8')));
 const catalogText=await readFile(new URL('data/simulator/catalog.json',root),'utf8');
 const revision=createHash('sha256').update(sources.join('\n')).update(catalogText).digest('hex').slice(0,12);
 for (let i=0;i<files.length;i++) {
   let content=sources[i];const file=files[i];
   if(file.endsWith('.js'))content=content.replace(/(['"])(\.\/[\w-]+\.(?:js|json))\1/g,(_,quote,path)=>`${quote}${path}?v=${revision}${quote}`);
-  if(file==='index.html')content=content.replace(/((?:src|href)="\.\/[^"?]+\.(?:js|css))"/g,`$1?v=${revision}"`);
+  if(file.endsWith('.html'))content=content.replace(/((?:src|href)="\.\/[^"?]+\.(?:js|css))"/g,`$1?v=${revision}"`);
   await writeFile(new URL(file,out),content);
 }
 const catalog = JSON.parse(catalogText);
