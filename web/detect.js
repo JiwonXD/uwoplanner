@@ -103,6 +103,9 @@ export function detect(frame, tpl, options = {}) {
   const minA = options.minA ?? 0.7;
   const minScore = options.minScore ?? 0.5; // sampled (text - ring) estimate needed before a full evaluation
   const exactGate = options.exactGate ?? 0.5; // below this, exact-position coverage caps the score
+  // Optional limit on where the match may start (title blocks sit in the top-left corner); candidates
+  // beyond it are skipped so stray text elsewhere in the region cannot win.
+  const maxX = options.maxOrigin?.x ?? width, maxY = options.maxOrigin?.y ?? height;
   const cache = options.cache || (options.cache = new Map());
   const area = integral(frame.dil, width, height);
   let best = { score: -1, a: 0, b: 0, c: 0, exact: 0, x: 0, y: 0, scale: 1 };
@@ -118,7 +121,7 @@ export function detect(frame, tpl, options = {}) {
     st.exactGate = exactGate;
     if (st.w > width || st.h > height) continue;
     const need = minA * st.textPts.length / 2, sampleNeed = minA * st.sample.length / 2;
-    for (let y = 0; y + st.h <= height; y += step) for (let x = 0; x + st.w <= width; x += step) {
+    for (let y = 0; y + st.h <= height && y <= maxY; y += step) for (let x = 0; x + st.w <= width && x <= maxX; x += step) {
       if (area(x, y, st.w, st.h) < need) continue;
       let hit = 0;
       for (let i = 0; i < st.sample.length; i += 2) hit += frame.dil[(y + st.sample[i + 1]) * width + x + st.sample[i]];

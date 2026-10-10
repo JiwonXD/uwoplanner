@@ -5,7 +5,11 @@ import { brightMasks, detect, defaultScales } from './detect.js';
 // regardless of the capture resolution, and only a narrow band of template scales must be tried.
 const MAX_WIDTH = 560;
 const ALL_SCALES = defaultScales(0.45, 1.6, 0.05);
-const ROI = { w: 0.35, h: 0.3 }; // top-left fraction of the frame that can hold the title text
+const ROI = { w: 0.18, h: 0.22 }; // top-left fraction of the frame that can hold the title block
+// The title block's top-left corner never starts beyond these fractions of the frame (measured 2-5%
+// across window and full-screen captures at UI scales 90-110%); matches elsewhere, such as a player
+// name containing 마을 in a chat notice, are ignored.
+const MAX_ORIGIN = { x: 0.08, y: 0.1 };
 const LOCK_SCORE = 0.7; // a match at least this strong pins the scale band for later frames
 const FULL_SEARCH_EVERY = 20; // frames; keeps the lock honest if the UI scale setting changes
 const caches = new Map();
@@ -38,7 +42,7 @@ self.onmessage = ({ data }) => {
     let best = { score: -1, name: null };
     templates.forEach((tpl, i) => {
       let cache = caches.get(tpl.name); if (!cache) caches.set(tpl.name, cache = new Map());
-      const r = detect(frames[i], tpl, { cache, scales, exactGate: opts.exactGate ?? tpl.exactGate, minScore: opts.minScore });
+      const r = detect(frames[i], tpl, { cache, scales, exactGate: opts.exactGate ?? tpl.exactGate, minScore: opts.minScore, maxOrigin: { x: fullW * MAX_ORIGIN.x * factor, y: fullH * MAX_ORIGIN.y * factor } });
       if (r.score > best.score) best = { ...r, name: tpl.label || tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale };
     });
     if (live && best.score >= LOCK_SCORE) lock.scale = best.scale;
