@@ -66,11 +66,11 @@ npm run dev
 감지는 `detect.js`가 담당한다. 프레임의 좌상단 35%×30% 영역만 폭 최대 560px로 줄이고, 밝고 채도가 낮은
 픽셀을 글자 마스크로 만든 뒤 `arrival-template.js`의 기준 마스크와 비교한다. 점수는
 (글자 위치가 밝은 비율) − (글자 바깥 테두리가 밝은 비율) − (블록 안 나머지 자리가 밝은 비율)이며
-배경 그림과 무관하다. 글자 정확 위치의 밝은 비율이 기준별 하한(도시 0.6, 마을 0.5) 미만이면
+배경 그림과 무관하다. 글자 정확 위치의 밝은 비율이 기준별 하한(도시 0.6, 마을 0.65) 미만이면
 점수를 그 값으로 낮춘다. 밝기 기준도 기준별로 다르며(도시 215, 어두운 바 위의 마을 제목 200)
 `build_arrival_template.py`의 `--luma`, `--sat`, `--exact` 옵션으로 저장한다.
 배율 0.45~1.6을 탐색해 창 크기와 UI 배율이 달라도 찾는다. 도착 화면은 0.9 안팎,
-다른 화면(세계지도, 항해, 조합·의뢰)은 0.69 이하로 측정됐고 기본 임계값은 0.8이다. UI 배율 90~110%의
+다른 화면(세계지도, 항해, 조합·의뢰, 여관·회식)은 0.64 이하로 측정됐고 기본 임계값은 0.8이다. UI 배율 90~110%의
 도시·마을 도착 화면 18장은 모두 0.83 이상이었다. 임계값을 넘는 프레임이 2회 연속이거나
 임계값보다 0.03 이상 높은 프레임이 1회면 알리고, 같은 도착은 설정한 시간 동안 다시 알리지 않는다.
 
@@ -84,8 +84,8 @@ npm run dev
 
 ```powershell
 python scripts/build_arrival_template.py --name 도시 --exact 0.6 입항1.png 입항2.png 입항3.png
-python scripts/build_arrival_template.py --name 마을 --region 50,100,36,75 --luma 200 마을1.png 마을2.png 마을3.png
-python scripts/build_arrival_template.py --name 마을@105 --label 마을 --region 45,110,34,80 --luma 200 마을-ui105.png
+python scripts/build_arrival_template.py --name 마을 --region 50,100,36,75 --luma 200 --exact 0.65 마을1.png 마을2.png 마을3.png
+python scripts/build_arrival_template.py --name 마을@105 --label 마을 --region 45,110,34,80 --luma 200 --exact 0.65 마을-ui105.png
 ```
 
 자원 사용: 캡처는 초당 2~3프레임만 받고 검사는 0.6초에 한 번이다. 한 번 찾은 배율을 기억해 다음 검사는
