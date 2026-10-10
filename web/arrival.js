@@ -75,7 +75,8 @@ async function startCapture() {
   try {
     unlockAudio();
     setState('창 선택 중', false);
-    stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 2, max: 3 } }, audio: false,
+    // displaySurface: 'window' opens the picker on its Window pane so the game window is the first thing offered.
+    stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 2, max: 3 }, displaySurface: 'window' }, audio: false,
       selfBrowserSurface: 'exclude', surfaceSwitching: 'include', monitorTypeSurfaces: 'include', preferCurrentTab: false });
   } catch (error) {
     setState('대기', false);
