@@ -39,7 +39,7 @@ self.onmessage = ({ data }) => {
     templates.forEach((tpl, i) => {
       let cache = caches.get(tpl.name); if (!cache) caches.set(tpl.name, cache = new Map());
       const r = detect(frames[i], tpl, { cache, scales, exactGate: opts.exactGate ?? tpl.exactGate, minScore: opts.minScore });
-      if (r.score > best.score) best = { ...r, name: tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale };
+      if (r.score > best.score) best = { ...r, name: tpl.label || tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale };
     });
     if (live && best.score >= LOCK_SCORE) lock.scale = best.scale;
     self.postMessage({ type: 'result', ts: data.ts, test: data.test, name: best.name, score: best.score, a: best.a, b: best.b, c: best.c, exact: best.exact,
