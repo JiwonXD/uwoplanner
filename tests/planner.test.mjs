@@ -190,6 +190,22 @@ test('max mode fills every cabin and trades a maxed-out contributor for higher-s
   assert.deepEqual(result.ships[0].filter(Boolean).sort(),['f','g']);
   state.shipCapacities[0]=3;const three=run(state,data),threeSummary=summarize(three,data);assert.equal(threeSummary.placed,3);assert.deepEqual(three.ships[0].filter(Boolean).sort(),['f','g','w']);
 });
+test('max mode splits one off-stat navigator holding every goal into several primary-stat crew',()=>{
+  // x holds a, b and c but 보급법 is half its top stat; y (a, b) and z (c) are 보급법-primary, f* are
+  // 보급법-primary fillers and n* are off-stat noise. With two cabins the ideal crew is y+z (2.0), not
+  // x plus a filler (1.5); a plain swap cannot get there because replacing x alone uncovers c.
+  const bogeup=(id,grants,grade,stats)=>({...mate(id,grants,grade),stats});
+  const mates=[bogeup('x',[grant('a'),grant('b'),grant('c')],'S',{박물학:100,보급법:50}),bogeup('y',[grant('a'),grant('b')],'A',{보급법:80,박물학:40}),bogeup('z',[grant('c')],'A',{보급법:80,박물학:40}),
+    ...Array.from({length:4},(_,i)=>bogeup('f'+i,[grant('n')],'S',{보급법:90,박물학:30})),...Array.from({length:20},(_,i)=>bogeup('n'+i,[grant('n')],'B',{포격술:70,보급법:10}))];
+  const data=indexCatalog({mates,abilities:['a','b','c','n'].map(id=>ability(id))});
+  const state=initialState();state.shipCount=1;state.statPriority='보급법';state.targets=['a','b','c'].map(id=>({ability:id,scope:'fleet',level:1}));
+  for(const [cabins,expected,total] of [[2,['y','z'],2],[3,['f0','y','z'],3],[5,['f0','f1','f2','y','z'],5]]){
+    state.shipCapacities[0]=cabins;state.fillMode='max';
+    const result=solve(state,data,{milliseconds:120,random:()=>.5}).state,summary=summarize(result,data);
+    assert.equal(summary.achieved,3);assert.deepEqual(result.ships[0].filter(Boolean).sort(),expected);assert.ok(Math.abs(summary.statScores.보급법-total)<1e-9);
+  }
+  state.fillMode='min';assert.deepEqual(run(state,data).ships[0].filter(Boolean),['x']); // fewest crew still wins in min mode
+});
 test('max mode without a stat fills by grade and keeps goals; fillMode survives import',()=>{
   const mates=[mate('goal',[grant('a')],'C'),mate('s',[],'S+'),mate('b',[],'B'),mate('c',[],'C')];
   const data=indexCatalog({mates,abilities:[ability('a')]});
