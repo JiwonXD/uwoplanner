@@ -137,7 +137,8 @@ export function detect(frame, tpl, options = {}) {
   const reach = step;
   const seeds = [...perScale.values()].sort((p, q) => q.score - p.score).slice(0, 3);
   for (const coarse of seeds) for (const scale of [coarse.scale - 0.025, coarse.scale, coarse.scale + 0.025]) {
-    const st = scaleTemplate(tpl, scale); st.exactGate = exactGate;
+    let st = cache.get(scale); if (!st) cache.set(scale, st = scaleTemplate(tpl, scale));
+    st.exactGate = exactGate;
     if (st.w > width || st.h > height) continue;
     for (let y = Math.max(0, coarse.y - reach); y <= Math.min(height - st.h, coarse.y + reach); y++)
       for (let x = Math.max(0, coarse.x - reach); x <= Math.min(width - st.w, coarse.x + reach); x++) consider(st, x, y);

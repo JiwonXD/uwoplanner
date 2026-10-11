@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {initialState,indexCatalog,configuration,activeGrants,slotLimit,summarize,validateState,primaryStats} from '../web/model.js';
+import {initialState,indexCatalog,configuration,activeGrants,slotLimit,summarize,validateState,primaryStats,statRatio} from '../web/model.js';
 import {solve} from '../web/solver.js';
 const ability=(id,scope='fleet')=>({id,name:id,scope,kind:'effect',known:true,category:scope==='fleet'?'모험':'전투'});
 const grant=(ability,origin='job',level=1)=>({ability,origin,level,kind:'effect',unlock:70});
@@ -112,14 +112,14 @@ test('crew without any targeted effect are never added, so achieved goals leave 
     assert.equal(summarize(result,data).achieved,1);assert.deepEqual(result.ships.flat().filter(Boolean),['m0']);
   }
 });
-test('swap refinement replaces a non-primary contributor with primary-stat crew of equal size',()=>{
+test('swap refinement replaces a contributor with higher-stat crew of equal size',()=>{
   const mates=[{...mate('m5',[grant('a','job',2),grant('b')]),stats:{판매전략:10}},{...mate('m8',[grant('a'),grant('b')]),stats:{판매전략:10}},
     {...mate('m1',[grant('a','job',2)]),stats:{박물학:10}},{...mate('m3',[grant('b','job',2)]),stats:{박물학:10}}];
   const data=indexCatalog({mates,abilities:[ability('a'),ability('b')]});
   const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.statPriority='박물학';
   state.targets=[{ability:'a',scope:'fleet',level:2},{ability:'b',scope:'fleet',level:2}];
   const result=run(state,data),summary=summarize(result,data);
-  assert.equal(summary.achieved,2);assert.equal(summary.placed,2);assert.equal(summary.primaryStatCounts.박물학,2);
+  assert.equal(summary.achieved,2);assert.equal(summary.placed,2);assert.equal(summary.statScores.박물학,2);
   assert.deepEqual(result.ships[0].filter(Boolean).sort(),['m1','m3']);
 });
 test('relocation moves a holder to the ship that needs it and backfills the ship it left',()=>{
@@ -135,29 +135,38 @@ test('equipped effects are limited to those that close a targeted gap',()=>{
   const result=run(state,data);assert.deepEqual(result.configs.m.effects,['goal']);
 });
 
-test('primary-stat headcount beats absolute totals, including the existing fleet',()=>{
+test('with a stat selected, equally small crews are ranked by that stat total',()=>{
   const high={...mate('high',[grant('goal')]),stats:{박물학:900,판매전략:1000}};
   const specialists=['a','b'].map(id=>({...mate(id,[grant('goal')]),stats:{박물학:10,판매전략:1}}));
   const data=indexCatalog({mates:[high,...specialists],abilities:[ability('goal')]});
   const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.statPriority='박물학';state.targets=[{ability:'goal',scope:'fleet',level:2}];
   state.ships[0][0]='high';state.ships[0][1]='a';
+  // Ratios: a and b have 박물학 as their top stat (1.0 each); high's 박물학 is 0.9 of its 판매전략.
   const result=run(state,data),summary=summarize(result,data);
-  assert.equal(summary.achieved,1);assert.equal(summary.primaryStatCounts.박물학,2);assert.equal(summary.stats.박물학,20);assert.ok(!result.ships.flat().includes('high'));
+  assert.equal(summary.achieved,1);assert.equal(summary.placed,2);assert.equal(summary.statScores.박물학,2);assert.ok(!result.ships.flat().includes('high'));
+  state.statPriority='판매전략';const sales=run(state,data),salesSummary=summarize(sales,data);assert.equal(salesSummary.placed,2);assert.ok(sales.ships.flat().includes('high'));assert.ok(Math.abs(salesSummary.statScores.판매전략-1.1)<1e-9);
   state.required=['high'];state.owned=['high','a'];state.ownedOnly=true;
-  const constrained=run(state,data);assert.equal(summarize(constrained,data).achieved,1);assert.equal(summarize(constrained,data).primaryStatCounts.박물학,1);assert.ok(constrained.ships.flat().includes('high'));assert.ok(!constrained.ships.flat().includes('b'));
+  const constrained=run(state,data);assert.equal(summarize(constrained,data).achieved,1);assert.ok(constrained.ships.flat().includes('high'));assert.ok(!constrained.ships.flat().includes('b'));
 });
 
+test('stat ratios are relative to each navigator\'s own top stat',()=>{
+  assert.equal(statRatio({stats:{박물학:200,판매전략:400}},'박물학'),0.5);
+  assert.equal(statRatio({stats:{박물학:200,판매전략:400}},'판매전략'),1);
+  assert.equal(statRatio({stats:{박물학:0}},'박물학'),0);
+  assert.equal(statRatio({stats:{박물학:5}},'없는스탯'),0);
+});
 test('primary stats include tied maxima but exclude missing and zero stats',()=>{
   assert.deepEqual(primaryStats({stats:{박물학:20,판매전략:20,백병술:10}}),['박물학','판매전략']);
   assert.deepEqual(primaryStats({stats:{박물학:0,판매전략:0}}),[]);
   assert.deepEqual(primaryStats({}),[]);
 });
 
-test('equal primary-stat counts prefer higher grade counts over catalog order and stat totals',()=>{
+test('without a stat, equally small crews prefer higher grades; with a stat, the ratio total wins',()=>{
   const grades=['C','B','A','S','S+'];
-  const mates=grades.map((g,i)=>({...mate(g,[grant('goal')],g),stats:{박물학:1000-i*100}}));
+  // Raw 박물학 falls with grade, but S and S+ have 판매전략 as their top stat, so their 박물학 ratio is below 1.
+  const mates=grades.map((g,i)=>({...mate(g,[grant('goal')],g),stats:i>=3?{박물학:1000-i*100,판매전략:1000}:{박물학:1000-i*100}}));
   const data=indexCatalog({mates,abilities:[ability('goal')]});
-  const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.statPriority='박물학';state.targets=[{ability:'goal',scope:'fleet',level:2}];
+  const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.targets=[{ability:'goal',scope:'fleet',level:2}];
   state.ships[0][0]='C';state.ships[0][1]='B';
   const result=run(state,data);assert.deepEqual(result.ships[0].slice(0,2),['S+','S']);assert.equal(summarize(result,data).achieved,1);
   state.ownedOnly=true;
@@ -166,17 +175,39 @@ test('equal primary-stat counts prefer higher grade counts over catalog order an
     const selected=run(state,data).ships[0].slice(0,2);
     assert.deepEqual(selected.sort(),[grades[top],grades[top-1]].sort());
   }
+  state.ownedOnly=false;state.statPriority='박물학';
+  assert.deepEqual(run(state,data).ships[0].slice(0,2).sort(),['A','B']); // ratio 1.0 crews, then higher grade
+});
+test('max mode fills every cabin and trades a maxed-out contributor for higher-stat crew',()=>{
+  // x alone meets the goal but 박물학 is a minor stat for it (ratio 0.1); f, g and w rate 1.0, 0.9 and 0.83.
+  const mates=[{...mate('x',[grant('a','job',2)]),stats:{박물학:10,판매전략:100}},{...mate('f',[grant('a')]),stats:{박물학:100,판매전략:50}},
+    {...mate('g',[grant('a')]),stats:{박물학:90,판매전략:100}},{...mate('w',[]),stats:{박물학:50,판매전략:60}}];
+  const data=indexCatalog({mates,abilities:[ability('a')]});
+  const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.statPriority='박물학';state.targets=[{ability:'a',scope:'fleet',level:2}];
+  const min=summarize(run(state,data),data);assert.equal(min.placed,1);assert.equal(min.achieved,1);
+  state.fillMode='max';const result=run(state,data),summary=summarize(result,data);
+  assert.equal(summary.achieved,1);assert.equal(summary.placed,2);assert.ok(Math.abs(summary.statScores.박물학-1.9)<1e-9);
+  assert.deepEqual(result.ships[0].filter(Boolean).sort(),['f','g']);
+  state.shipCapacities[0]=3;const three=run(state,data),threeSummary=summarize(three,data);assert.equal(threeSummary.placed,3);assert.deepEqual(three.ships[0].filter(Boolean).sort(),['f','g','w']);
+});
+test('max mode without a stat fills by grade and keeps goals; fillMode survives import',()=>{
+  const mates=[mate('goal',[grant('a')],'C'),mate('s',[],'S+'),mate('b',[],'B'),mate('c',[],'C')];
+  const data=indexCatalog({mates,abilities:[ability('a')]});
+  const state=initialState();state.shipCount=1;state.shipCapacities[0]=2;state.fillMode='max';state.targets=[{ability:'a',scope:'fleet',level:1}];
+  const result=run(state,data);assert.deepEqual(result.ships[0].filter(Boolean).sort(),['goal','s']);
+  assert.equal(validateState(result,data).fillMode,'max');assert.equal(validateState({...result,fillMode:'bogus'},data).fillMode,'min');
 });
 
-test('goals and primary-stat counts outrank grade, and spare seats stay empty',()=>{
-  const low=mate('primary',[grant('goal')],'C');
-  const high={...mate('secondary',[],'S+'),stats:{박물학:10,판매전략:100}};
+test('goals outrank stats, stat total breaks ties before grade, and spare seats stay empty in min mode',()=>{
+  const low=mate('cheap',[grant('goal')],'C'); // 박물학 is cheap's only stat: ratio 1.0
+  const high={...mate('rich',[],'S+'),stats:{박물학:10,판매전략:100}}; // 박물학 ratio 0.1
   const other={...mate('other',[],'B'),stats:{판매전략:100}};
   const data=indexCatalog({mates:[other,low,high],abilities:[ability('goal')]});
   const state=initialState();state.shipCount=1;state.shipCapacities[0]=1;state.statPriority='박물학';state.targets=[{ability:'goal',scope:'fleet',level:1}];
-  assert.equal(run(state,data).ships[0][0],'primary');
-  high.grants=[grant('goal')];assert.equal(run(state,data).ships[0][0],'primary');
-  state.shipCapacities[0]=2;const result=run(state,data);assert.deepEqual(result.ships[0].filter(Boolean),['primary']);assert.equal(summarize(result,data).primaryStatCounts.박물학,1);
+  assert.equal(run(state,data).ships[0][0],'cheap');
+  high.grants=[grant('goal')];assert.equal(run(state,data).ships[0][0],'cheap'); // ratio 1.0 beats 0.1 despite the lower grade
+  high.stats={박물학:120,판매전략:100};assert.equal(run(state,data).ships[0][0],'rich'); // equal ratio 1.0: higher grade wins
+  state.shipCapacities[0]=2;const result=run(state,data);assert.deepEqual(result.ships[0].filter(Boolean),['rich']);
   state.statPriority='';assert.equal(summarize(run(state,data),data).placed,1);
 });
 

@@ -1,4 +1,6 @@
-import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,primaryStats,GRADE_ORDER} from './model.js';
+import {candidates,configuration,activeGrants,slotLimit,summarize,EMPTY,cabinCount,fleetCapacity,GRADE_ORDER,statRatio} from './model.js';
+// Selected-stat weight of a navigator: their stat relative to their own highest stat (see statRatio).
+const statOf=(mate,stat)=>stat?statRatio(mate,stat):0;
 // Reorder the selected crew without changing equipment or ship-target contributions.
 export function distributeFleet(state,data){
   const result=structuredClone(state),locked=new Set(state.locked||[]);
@@ -7,7 +9,7 @@ export function distributeFleet(state,data){
   for(let ship=0;ship<state.shipCount;ship++)for(let cabin=0;cabin<cabinCount(state,ship);cabin++){
     const id=state.ships[ship][cabin];if(!id||locked.has(id))continue;
     const mate=data.mateById.get(id),grade=GRADE_ORDER.indexOf(mate.grade);
-    ranks.set(id,state.statPriority?[primaryStats(mate).includes(state.statPriority)?0:1,grade<0?GRADE_ORDER.length:grade]:[0,0]);
+    ranks.set(id,[-statOf(mate,state.statPriority),grade<0?GRADE_ORDER.length:grade]);
     const needed=activeGrants(mate,configuration(mate,state)).some(g=>shipTargets[ship].has(g.ability));
     (needed?reserved[ship]:free).push(id);result.ships[ship][cabin]=null;
   }
@@ -25,10 +27,13 @@ export function distributeFleet(state,data){
   return result;
 }
 // Time-bounded search: randomised greedy construction, redundancy removal and a local search
-// (one-for-one swaps and two-for-one merges), repeated from different starting orders until
-// the budget runs out. Only crew that can contribute to a target are ever added, so achieved
-// goals leave cabins empty. Reports the best found arrangement; does not claim a proof of
-// global optimality or infeasibility.
+// (one-for-one swaps, two-for-one merges and relocations), repeated from different starting
+// orders until the budget runs out.
+// fillMode 'min' (default): only crew that close a goal gap are added; achieved goals leave cabins
+// empty, and a selected stat only breaks ties between equally small crews.
+// fillMode 'max': every cabin is filled and, after goal shortfall, the fleet total of the selected
+// stat is maximised, so goal contributors may be exchanged for higher-stat crew.
+// Reports the best found arrangement; does not claim a proof of global optimality or infeasibility.
 export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Math.random}={}){
   const started=performance.now(),deadline=started+milliseconds;const targets=input.targets;const locked=new Set(input.locked);
   const owned=new Set(input.owned);const pool=data.mates.filter(m=>!input.ownedOnly||owned.has(m.id));
@@ -40,14 +45,14 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
   for(let s=0;s<input.shipCount;s++)for(let c=0;c<cabinCount(input,s);c++){
     const id=input.ships[s][c];if(id&&locked.has(id))base.ships[s][c]=id;
   }
-  const stat=input.statPriority;
-  const isPrimary=mate=>!!stat&&primaryStats(mate).includes(stat);
+  const stat=input.statPriority,fill=input.fillMode==='max';
+  const statValue=mate=>statOf(mate,stat);
   const gradeRank=mate=>{const rank=GRADE_ORDER.indexOf(mate.grade);return rank<0?GRADE_ORDER.length:rank;};
   // Targets on abilities without a known scope never accumulate in summarize(); keep the solver consistent with it.
   const abilityTargets=new Map();targets.forEach((t,i)=>{if(!data.abilityById.get(t.ability)?.scope)return;if(!abilityTargets.has(t.ability))abilityTargets.set(t.ability,[]);abilityTargets.get(t.ability).push(i);});
   const ones=targets.map(()=>1);
-  // Candidate records: only crew with at least one targeted effect or fixed grant can help,
-  // plus mandatory crew, who ride along regardless.
+  // Candidate records. In 'min' mode only crew with a targeted effect or fixed grant (plus mandatory
+  // crew) can help; in 'max' mode everyone may ride along as a stat filler.
   const relevant=pool.map(m=>{
     const fixed=m.grants.filter(g=>g.kind==='skill'||(g.origin==='transcendence_3'&&configuration(m,input).transcended));
     const options=candidates(m).filter(g=>abilityTargets.has(g.ability));
@@ -55,29 +60,31 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     // Crew whose targeted grants are all fleet-wide score the same on every ship.
     const shipBound=[...options,...fixed].some(g=>(abilityTargets.get(g.ability)||[]).some(i=>targets[i].scope!=='fleet'));
     return {mate:m,options,fixed,useful,shipBound};
-  }).filter(r=>r.useful||required.has(r.mate.id));
+  }).filter(r=>r.useful||required.has(r.mate.id)||fill);
   const byId=new Map(relevant.map(r=>[r.mate.id,r]));
   const removable=id=>id&&!locked.has(id)&&!required.has(id);
+  // Tie-break between candidates: higher selected stat, then higher grade.
+  const preferred=(a,b)=>statValue(b)-statValue(a)||gradeRank(a)-gradeRank(b);
+  const byPreference=relevant.slice().sort((a,b)=>preferred(a.mate,b.mate));
   // ---- scoring ----
   // A snapshot holds the per-target levels and crew counts of a trial so moves can be scored
   // without re-summarising the whole fleet.
-  function snapshot(trial){const s=summarize(trial,data);return {values:s.targets.map(t=>t.actual),count:s.placed,primary:s.primaryStatCounts[stat]||0,grades:GRADE_ORDER.map(g=>s.gradeCounts[g]||0)};}
+  function snapshot(trial){const s=summarize(trial,data);return {values:s.targets.map(t=>t.actual),count:s.placed,statSum:s.statScores[stat]||0,grades:GRADE_ORDER.map(g=>s.gradeCounts[g]||0)};}
   function scoreOf(snap){
     let deficit=0,over=0;for(let i=0;i<targets.length;i++){const gap=targets[i].level-snap.values[i];if(gap>0)deficit+=gap/targets[i].level;else over-=gap;}
-    return {deficit,count:snap.count,primaryCount:snap.primary,grades:snap.grades,over};
+    return {deficit,count:snap.count,statSum:snap.statSum,grades:snap.grades,over};
   }
   function objective(trial){const snap=snapshot(trial);return {...scoreOf(snap),snap};}
-  // Goal shortfall first, then fewer crew; with a stat priority, prefer crews with more
-  // primary-stat holders and then higher grades among equally small crews.
   function better(a,b){if(Math.abs(a.deficit-b.deficit)>1e-8)return a.deficit<b.deficit;
-    if(a.count!==b.count)return a.count<b.count;
-    if(stat){
-      if(a.primaryCount!==b.primaryCount)return a.primaryCount>b.primaryCount;
-      for(let i=0;i<GRADE_ORDER.length;i++)if(a.grades[i]!==b.grades[i])return a.grades[i]>b.grades[i];
+    if(fill){
+      if(stat&&Math.abs(a.statSum-b.statSum)>1e-9)return a.statSum>b.statSum;
+      if(a.count!==b.count)return a.count>b.count;
+    }else{
+      if(a.count!==b.count)return a.count<b.count;
+      if(stat&&Math.abs(a.statSum-b.statSum)>1e-9)return a.statSum>b.statSum;
     }
+    for(let i=0;i<GRADE_ORDER.length;i++)if(a.grades[i]!==b.grades[i])return a.grades[i]>b.grades[i];
     return a.over<b.over;}
-  // Tie-break between candidates with equal gain: primary stat holders, then higher grade.
-  const preferred=(a,b)=>(isPrimary(b)?1:0)-(isPrimary(a)?1:0)||gradeRank(a)-gradeRank(b);
   function contributions(mate,config,ship){
     const delta=[];for(const g of activeGrants(mate,config))for(const i of abilityTargets.get(g.ability)||[])if(targets[i].scope==='fleet'||targets[i].scope===ship)delta.push(i,g.level);return delta;
   }
@@ -85,14 +92,17 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     const values=snap.values.slice(),delta=contributions(mate,config,ship);
     for(let k=0;k<delta.length;k+=2)values[delta[k]]+=sign*delta[k+1];
     const grades=snap.grades.slice(),rank=gradeRank(mate);if(rank<grades.length)grades[rank]+=sign;
-    return {values,count:snap.count+sign,primary:snap.primary+(isPrimary(mate)?sign:0),grades};
+    return {values,count:snap.count+sign,statSum:snap.statSum+sign*statValue(mate),grades};
   }
-  // Best equipment for a candidate on a ship given current levels; only effects that close a gap are equipped.
+  // Best equipment for a candidate on a ship given current levels. In 'min' mode only effects that
+  // close a gap are equipped; in 'max' mode every targeted effect is equipped (gap-closing ones first)
+  // so a filler can take over a goal when the contributor it duplicates is swapped out later.
   function optionFor(rec,ship,current,weights){
     const gain=g=>{
       let total=0;for(const i of abilityTargets.get(g.ability)||[]){const t=targets[i];if(t.scope==='fleet'||t.scope===ship)total+=Math.min(g.level,Math.max(0,t.level-current[i]))/t.level*weights[i];}return total;
     };
-    const selected=rec.options.map(g=>({g,gain:gain(g)})).filter(o=>o.gain>0).sort((a,b)=>b.gain-a.gain).slice(0,slotLimit(rec.mate));
+    const applies=g=>(abilityTargets.get(g.ability)||[]).some(i=>targets[i].scope==='fleet'||targets[i].scope===ship);
+    const selected=rec.options.map(g=>({g,gain:gain(g)})).filter(o=>o.gain>0||(fill&&applies(o.g))).sort((a,b)=>b.gain-a.gain||b.g.level-a.g.level).slice(0,slotLimit(rec.mate));
     const useful=selected.reduce((n,o)=>n+o.gain,0)+rec.fixed.reduce((n,g)=>n+gain(g),0);
     return {effects:selected.map(o=>o.g.ability),gain:useful};
   }
@@ -105,8 +115,14 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     const seats=[];for(let s=0;s<input.shipCount;s++)for(let c=0;c<cabinCount(input,s);c++){const id=trial.ships[s][c];if(removable(id))seats.push({s,c,id,mate:data.mateById.get(id)});}
     return seats;
   }
-  // Drop occupants whose removal keeps every achieved level, trying the least valuable first.
+  function emptySeats(trial){
+    const seats=[];for(let s=0;s<input.shipCount;s++)for(let c=0;c<cabinCount(input,s);c++)if(!trial.ships[s][c])seats.push({s,c});return seats;
+  }
+  const unused=usedSet=>relevant.filter(r=>!usedSet.has(r.mate.id));
+  const bestFiller=(usedSet,except)=>byPreference.find(r=>!usedSet.has(r.mate.id)&&r.mate.id!==except)||null;
+  // Drop occupants whose removal keeps every achieved level, trying the least valuable first ('min' mode only).
   function prune(trial,used){
+    if(fill)return;
     const seats=seatsOf(trial).sort((a,b)=>preferred(b.mate,a.mate));
     let snap=snapshot(trial);
     for(const {s,c,id,mate} of seats){
@@ -114,7 +130,13 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       if(scoreOf(next).deficit<=scoreOf(snap).deficit+1e-8){trial.ships[s][c]=null;used.delete(id);delete trial.configs[id];snap=next;}
     }
   }
-  function unused(usedSet){return relevant.filter(r=>!usedSet.has(r.mate.id));}
+  // 'max' mode: fill every empty cabin with the best remaining crew by selected stat, then grade.
+  function fillEmpties(trial,used,current){
+    for(const {s,c} of emptySeats(trial)){
+      const rec=bestFiller(used);if(!rec)break;
+      place(trial,used,current,rec,s,c,optionFor(rec,s,current,ones));
+    }
+  }
   // One-for-one swaps: replace an occupant with an unused candidate when the objective improves.
   function swapPass(trial,used,until){
     let improved=false;
@@ -125,7 +147,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       const without=shifted(snap,mate,trial.configs[id]||configuration(mate,trial),s,-1);
       let swap=null;
       for(const rec of unused(used)){
-        const option=optionFor(rec,s,without.values,ones);if(option.gain<=0)continue;
+        const option=optionFor(rec,s,without.values,ones);if(!fill&&option.gain<=0)continue;
         const candidate=scoreOf(shifted(without,rec.mate,configFor(rec.mate,option.effects),s,1));
         if(better(candidate,swap?swap.score:current))swap={rec,option,score:candidate};
       }
@@ -138,6 +160,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     return improved;
   }
   // Two-for-one merges: replace a pair of occupants with one candidate that covers both.
+  // In 'max' mode the freed seat is immediately refilled with the best remaining filler.
   function mergePass(trial,used,until){
     const seats=seatsOf(trial);const snap=snapshot(trial),current=scoreOf(snap);
     for(let a=0;a<seats.length;a++)for(let b=a+1;b<seats.length;b++){
@@ -148,13 +171,19 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       for(const rec of unused(used)){
         for(const seat of (A.s===B.s?[A]:[A,B])){
           const option=optionFor(rec,seat.s,without.values,ones);if(option.gain<=0)continue;
-          const candidate=scoreOf(shifted(without,rec.mate,configFor(rec.mate,option.effects),seat.s,1));
-          if(better(candidate,merge?merge.score:current))merge={rec,option,seat,score:candidate};
+          let after=shifted(without,rec.mate,configFor(rec.mate,option.effects),seat.s,1),refill=null;
+          if(fill){
+            const other=seat===A?B:A;const filler=bestFiller(used,rec.mate.id);
+            if(filler){const opt=optionFor(filler,other.s,after.values,ones);refill={rec:filler,option:opt,seat:other};after=shifted(after,filler.mate,configFor(filler.mate,opt.effects),other.s,1);}
+          }
+          const candidate=scoreOf(after);
+          if(better(candidate,merge?merge.score:current))merge={rec,option,seat,refill,score:candidate};
         }
       }
       if(merge){
         for(const seat of [A,B]){trial.ships[seat.s][seat.c]=null;used.delete(seat.id);delete trial.configs[seat.id];}
         trial.ships[merge.seat.s][merge.seat.c]=merge.rec.mate.id;used.add(merge.rec.mate.id);trial.configs[merge.rec.mate.id]=configFor(merge.rec.mate,merge.option.effects);
+        if(merge.refill){const r=merge.refill;trial.ships[r.seat.s][r.seat.c]=r.rec.mate.id;used.add(r.rec.mate.id);trial.configs[r.rec.mate.id]=configFor(r.rec.mate,r.option.effects);}
         return true;
       }
     }
@@ -169,7 +198,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
     if(!shortTargets.length)return false;
     const seats=seatsOf(trial);
     const config=seat=>trial.configs[seat.id]||configuration(seat.mate,trial);
-    for(const {t,i} of shortTargets){
+    for(const {t} of shortTargets){
       const dest=t.scope;
       const holders=seats.filter(seat=>seat.s!==dest&&byId.get(seat.id)&&[...byId.get(seat.id).options,...byId.get(seat.id).fixed].some(g=>g.ability===t.ability));
       for(const holder of holders){
@@ -181,20 +210,20 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
           if(spot.evict)s1=shifted(s1,spot.evict.mate,config(spot.evict),dest,-1);
           const rec=byId.get(holder.id);const moveOption=optionFor(rec,dest,s1.values,ones);if(moveOption.gain<=0)continue;
           const moved=configFor(rec.mate,moveOption.effects);const s2=shifted(s1,rec.mate,moved,dest,1);
-          // Backfill the vacated seat (and, if someone was evicted, give them a chance elsewhere is left to later rounds).
-          let fill=null;const vacancyShip=holder.s;
+          // Backfill the vacated seat with the best unused candidate (any crew in 'max' mode).
+          let backfill=null;const vacancyShip=holder.s;
           for(const cand of unused(used)){
-            const option=optionFor(cand,vacancyShip,s2.values,ones);if(option.gain<=0)continue;
+            if(cand.mate.id===holder.id)continue;
+            const option=optionFor(cand,vacancyShip,s2.values,ones);if(!fill&&option.gain<=0)continue;
             const s3=shifted(s2,cand.mate,configFor(cand.mate,option.effects),vacancyShip,1);const sc=scoreOf(s3);
-            if(better(sc,fill?fill.score:scoreOf(s2)))fill={cand,option,score:sc};
+            if(better(sc,backfill?backfill.score:scoreOf(s2)))backfill={cand,option,score:sc};
           }
-          const finalScore=fill?fill.score:scoreOf(s2);
+          const finalScore=backfill?backfill.score:scoreOf(s2);
           if(!better(finalScore,current))continue;
-          // apply
           trial.ships[holder.s][holder.c]=null;
           if(spot.evict){trial.ships[dest][spot.c]=null;used.delete(spot.evict.id);delete trial.configs[spot.evict.id];}
           trial.ships[dest][spot.c]=holder.id;trial.configs[holder.id]=moved;
-          if(fill){trial.ships[vacancyShip][holder.c]=fill.cand.mate.id;used.add(fill.cand.mate.id);trial.configs[fill.cand.mate.id]=configFor(fill.cand.mate,fill.option.effects);}
+          if(backfill){trial.ships[vacancyShip][holder.c]=backfill.cand.mate.id;used.add(backfill.cand.mate.id);trial.configs[backfill.cand.mate.id]=configFor(backfill.cand.mate,backfill.option.effects);}
           return true;
         }
       }
@@ -231,7 +260,7 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
       place(trial,used,current,rec,choice.ship,choice.cabin,choice.option);
     }
     // Small random exclusions diversify combinations without ever dropping locks.
-    const records=relevant.filter(r=>iterations===0||random()>.08);
+    const records=relevant.filter(r=>r.useful&&(iterations===0||random()>.08));
     for(let step=0;step<fleetCapacity(input);step++){
       if(performance.now()>=deadline)break;
       let chosen=null,bestGain=0;
@@ -244,10 +273,10 @@ export function solve(input,data,{milliseconds=10000,onProgress=()=>{},random=Ma
           if(option.gain>bestGain+1e-9||(option.gain>0&&Math.abs(option.gain-bestGain)<=1e-9&&chosen&&preferred(rec.mate,chosen.rec.mate)<0)){chosen={rec,ship,cabin:empty[ship],option};bestGain=option.gain;}
         }
       }
-      if(!chosen)break; // nothing left that closes a gap: remaining cabins stay empty
+      if(!chosen)break; // nothing left that closes a gap
       place(trial,used,current,chosen.rec,chosen.ship,chosen.cabin,chosen.option);
     }
-    prune(trial,used);
+    if(fill)fillEmpties(trial,used,current);else prune(trial,used);
     // Spend a slice of the budget improving this construction by local moves; promising
     // constructions (no worse than the best so far on goal shortfall) get a larger slice.
     const promising=!best||objective(trial).deficit<=score.deficit+1e-8;

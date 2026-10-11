@@ -71,7 +71,7 @@ function renderPreview(result){
   const scopeKey=t=>t.scope==='fleet'?-1:t.scope;
   const order=after.targets.map((t,i)=>i).sort((a,b)=>scopeKey(after.targets[a])-scopeKey(after.targets[b])||a-b);
   $('#result-preview').hidden=false;
-  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p>${state.statPriority?`<p class="stat-comparison"><strong>${escape(state.statPriority)} 주스탯 항해사</strong><br>${before.primaryStatCounts[state.statPriority]||0}명 → ${after.primaryStatCounts[state.statPriority]||0}명</p>`:''}<div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${order.map(i=>{const t=after.targets[i];return `<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`;}).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
+  $('#result-preview').innerHTML=`<h3>추천 배치 검토</h3><p class="small">목표 달성 ${before.achieved} → ${after.achieved} / ${state.targets.length} · 승선 ${before.placed} → ${after.placed}명</p>${state.statPriority?`<p class="stat-comparison"><strong>${escape(state.statPriority)} 환산 합계</strong><br>${(before.statScores[state.statPriority]||0).toFixed(1)} → ${(after.statScores[state.statPriority]||0).toFixed(1)}<small> · 주스탯인 항해사 1명 = 1.0</small></p>`:''}<div class="comparison-scroll"><table><caption>목표별 현재 배치와 추천 배치 비교</caption><thead><tr><th>목표</th><th>현재</th><th>추천</th><th>부족</th></tr></thead><tbody>${order.map(i=>{const t=after.targets[i];return `<tr><th>${escape(data.abilityById.get(t.ability).name)}<small>${t.scope==='fleet'?'선단 전체':`선박 ${t.scope+1}`} · 목표 ${t.level}</small></th><td>${before.targets[i].actual}</td><td>${t.actual}</td><td>${Math.max(0,t.level-t.actual)||'달성'}</td></tr>`;}).join('')}</tbody></table></div><details><summary>선박별 항해사·장착 효과 확인</summary>${result.state.ships.slice(0,state.shipCount).map((row,i)=>`<h4>선박 ${i+1} · ${row.filter(Boolean).length}명</h4>${row.filter(Boolean).map(id=>{const m=data.mateById.get(id),cfg=configuration(m,result.state);return `<div class="preview-mate"><b>${escape(m.name)}${state.required.includes(id)?' · 필수':''}</b><p>${cfg.effects.map(a=>escape(data.abilityById.get(a).name)).join(', ')}${cfg.transcended?' · 3차 초월 적용':''}</p></div>`;}).join('')||'<p class="small">빈 선박</p>'}`).join('')}</details>`;
 }
 
 function statsHtml(stats){return `<div class="stats-grid">${STAT_GROUPS.flatMap(([,names])=>names).map(k=>`<div class="stat-cell">${escape(k)}<strong>${(stats[k]||0).toLocaleString()}</strong></div>`).join('')}</div>`;}
@@ -108,7 +108,10 @@ function render(){
   $('#required-list').innerHTML=`<div class="panel-title"><h3>필수 항해사 <span class="count">${state.required.length}명</span></h3><button id="pick-required" class="text-button">선택·변경</button></div>${state.required.map(id=>`<button class="required-chip" data-unrequire="${id}" aria-label="${escape(data.mateById.get(id).name)} 필수 해제">${escape(data.mateById.get(id).name)} ×</button>`).join('')||'<p class="small hint">지정된 항해사가 없습니다.</p>'}`;
   $('#placed-count').textContent=summary.placed;$('#achieved-count').textContent=`${summary.achieved} / ${state.targets.length}`;
   $('#ship-count').value=state.shipCount;$('#owned-only').checked=state.ownedOnly;
-  $('#stat-priority-help').textContent=state.statPriority?`목표를 가장 적은 인원으로 만족하는 조합 중 ${state.statPriority}이 주스탯인 항해사가 많은 쪽을 고르고, 그다음 제독 → S → A → B → C 순으로 높은 등급을 선호합니다. 주스탯은 각 항해사의 가장 높은 스탯이며 공동 1위도 포함합니다. 목표에 기여하지 않는 항해사는 넣지 않고 빈 선실로 둡니다.`:'목표를 만족하는 가장 적은 인원 조합을 찾습니다. 목표에 기여하지 않는 항해사는 넣지 않고 빈 선실로 둡니다.';
+  document.querySelectorAll('[data-fill-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.fillMode===(state.fillMode||'min'))));
+  $('#stat-priority-help').textContent=state.fillMode==='max'
+    ?(state.statPriority?`목표를 만족시키면서 모든 선실을 채우고, ${state.statPriority} 환산 합계가 가장 높은 조합을 찾습니다. 목표 효과가 이미 충분하면 그 효과를 가진 항해사도 환산치가 높은 항해사로 바꿉니다. 환산치는 항해사마다 자기 최고 스탯을 1로 본 비율이라 등급이나 성장 상태와 무관하게 비교됩니다.`:'목표를 만족시키면서 모든 선실을 채웁니다. 스탯을 고르면 그 스탯 환산 합계가 가장 높은 조합을, 고르지 않으면 높은 등급 위주로 채웁니다.')
+    :(state.statPriority?`목표를 만족하는 가장 적은 인원 조합을 찾고, 인원이 같으면 ${state.statPriority} 환산 합계가 높은 쪽을 고릅니다. 환산치는 항해사마다 자기 최고 스탯을 1로 본 비율입니다. 목표에 기여하지 않는 항해사는 넣지 않고 빈 선실로 둡니다.`:'목표를 만족하는 가장 적은 인원 조합을 찾습니다. 목표에 기여하지 않는 항해사는 넣지 않고 빈 선실로 둡니다.');
   $('#stat-priority').value=state.statPriority;
   $('#selected-name').textContent='빈 선실을 눌러 항해사를 배치하세요';
   renderRoster();renderShips(summary);renderTargets(summary);if(!$('#collection').hidden)renderCollection();
@@ -147,6 +150,7 @@ function showMate(id,editEquipment=false){
 function configureMate(){const mate=data.mateById.get(detailMate);if(!state.configs[detailMate])state.configs[detailMate]=configuration(mate,state);return state.configs[detailMate];}
 function busy(value){document.body.classList.toggle('busy',value);$('#stop').hidden=!value;$('#solve').hidden=value;
   for(const id of ['export','import','about','stats-open','clear','ship-count','owned-only','stat-priority','manage-owned','undo'])$('#'+id).disabled=value;
+  document.querySelectorAll('[data-fill-mode]').forEach(b=>b.disabled=value);
 }
 function resultText(r,stopped=false){
   const summary=summarize(r.state,data);
@@ -195,6 +199,7 @@ async function init(){
   });
   $('#owned-only').onchange=e=>{state.ownedOnly=e.target.checked;commit();};
   $('#stat-priority').onchange=e=>{state.statPriority=e.target.value;commit();};
+  document.querySelectorAll('[data-fill-mode]').forEach(b=>b.onclick=()=>{if(worker||state.fillMode===b.dataset.fillMode)return;state.fillMode=b.dataset.fillMode;commit();});
   $('#roster').onclick=e=>{if(worker)return;const required=e.target.closest('[data-card-required]');if(required){toggleRequired(required.dataset.cardRequired);return;}const detail=e.target.closest('[data-detail]');if(detail){showMate(detail.dataset.detail);return;}
     const button=e.target.closest('[data-select]');if(button&&pendingSlot){
       const id=button.dataset.select,[s,c]=pendingSlot;
@@ -250,7 +255,7 @@ async function init(){
   $('#detail-content').onclick=e=>{if(e.target.id==='remove-mate'){
     $('#detail').close();removeFromFleet(detailMate);}};
   $('#stats-open').onclick=()=>{detailMate=null;const summary=summarize(state,data);showDialog(`<h2>선단 스탯</h2><p class="small">승선한 항해사의 원본 스탯 단순 합계예요. 선박 보정·장비·태생·직업 직접 효과는 포함하지 않아요.</p><h3>전체</h3>${statsHtml(summary.stats)}${summary.shipStats.slice(0,state.shipCount).map((stats,i)=>`<h3>선박 ${i+1}</h3>${statsHtml(stats)}`).join('')}`);};
-  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 우선 줄이고, 그다음 적은 인원, 선택한 주스탯 인원수, 등급 순으로 비교해요. 목표에 기여하지 않는 항해사는 넣지 않고 빈 선실로 둬요. 여러 시작점에서 탐욕 구성, 불필요 인원 제거, 교체 탐색을 시간이 다할 때까지 반복해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터·하이델룬·칼릭스를 추가한 644명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
+  $('#about').onclick=()=>{detailMate=null;showDialog(`<h2>계산 기준</h2><p>일반 항해사는 효과 5개, 제독은 6개를 선택해요. 10·30·50·70레벨 효과를 모두 장착 후보로 보고 습득 레벨을 제한하지 않아요. 3차 초월 완료를 체크하면 별도 고정 효과를 더해요.</p><h3>자동 맞춤</h3><p>목표 효과의 부족분을 가장 먼저 줄여요. 최소 인원 모드는 그다음 적은 인원, 선택한 스탯 환산 합계, 등급 순으로 비교하고 목표에 기여하지 않는 항해사는 넣지 않아요. 최대 인원 모드는 모든 선실을 채운 뒤 선택한 스탯 환산 합계가 높은 조합을 고르며, 효과가 이미 충분한 항해사는 환산치가 높은 항해사로 바꿔요. 환산치는 항해사마다 자기 최고 스탯을 1로 본 비율이에요. 성장하면 모든 스탯이 같은 비율로 오르고 등급 차이도 사라지므로 기본 스탯은 이렇게 비율로만 비교해요. 여러 시작점에서 탐욕 구성, 불필요 인원 제거, 교체·병합·재배치 탐색을 시간이 다할 때까지 반복해요. 필수 항해사를 포함하며 자리와 장착 효과는 목표에 맞춰 정해요. 전역 최적해나 목표 달성 불가능을 증명하는 계산은 아니에요.</p><h3>데이터 범위</h3><p>9월 2일 스냅샷에 멜라티·제임스 랭커스터·하이델룬·칼릭스를 추가한 644명 기준입니다. 정의가 없거나 적용 범위가 불확실한 효과는 목표 목록에서 제외했어요. 해전 기술 합산은 참고 사이트 규칙을 따르며, 일부 수치표는 비어 있어요. 태생·직업의 직접 수치 효과는 이번 레벨 목표 계산에 포함하지 않아요.</p><h3>저장</h3><p>보유 항해사와 배치는 이 브라우저에 저장돼요. 기기 간 자동 동기화는 없으니 파일 내보내기로 백업해 주세요.</p>`);};
   const startSearch=(more=false)=>{
     if(worker)return;
     const previous=more?proposed:null;
