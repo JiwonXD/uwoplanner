@@ -12,13 +12,14 @@ const catalog=mates=>indexCatalog({mates,abilities:[
 ]});
 const occupants=state=>state.ships.slice(0,state.shipCount).flat().filter(Boolean);
 
-test('fleet-only crew fill cabin by cabin across seven ships in primary-stat and grade order',()=>{
+test('fleet-only crew fill cabin by cabin across seven ships in stat and grade order',()=>{
   const mates=Array.from({length:10},(_,i)=>mate(String(i),i===9?'S+':'S',i===0?{박물학:900,백병술:1000}:{박물학:10}));
   const data=catalog(mates),state=initialState();state.statPriority='박물학';
   state.ships[0]=[...mates.map(m=>m.id),null];state.targets=[{ability:'fleet',scope:'fleet',level:10}];
   const original=structuredClone(state),result=distributeFleet(state,data);
   assert.deepEqual(state,original);
   assert.deepEqual(result.ships.map(row=>row.filter(Boolean).length),[2,2,2,1,1,1,1]);
+  // '0' has 백병술 as its top stat (박물학 ratio 0.9), so it sorts after the ratio-1.0 crew; S+ '9' leads them.
   assert.deepEqual(result.ships.map(row=>row[0]),['9','1','2','3','4','5','6']);
   assert.deepEqual(result.ships.slice(0,3).map(row=>row[1]),['7','8','0']);
   assert.equal(summarize(result,data).targets[0].actual,10);
