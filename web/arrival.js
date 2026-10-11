@@ -7,7 +7,6 @@ const STRONG_MARGIN = 0.03; // one frame this far above the threshold alerts imm
 const MIN_FRAME_GAP = 600; // ms between frames handed to the worker; arrival screens stay up for seconds, so ~1.5 checks/s is plenty
 const DEBUG = new URLSearchParams(location.search).has('debug'); // ?debug shows the log and screenshot test tools
 const TONE_KEYS = ['confirm', 'melody', 'chime', 'sharp', 'beep', 'retro', 'soft', 'gull'];
-const settings = { ...DEFAULTS, ...load() };
 const originalTitle = document.title;
 let worker, stream, track, reader, fallbackTimer, staleTimer, flashTimer;
 let busy = false, lastSent = 0, lastFrameAt = 0, lastAlertAt = 0, streak = 0, detectCount = 0;
@@ -16,16 +15,28 @@ const log = [];
 const recent = []; // {ts, score, name} for the rolling best-score readout
 const testWaiters = new Map();
 
+// Numeric settings are kept inside the ranges of their inputs; a cleared or corrupted value falls
+// back to the default instead of, say, a 0-second cooldown that would alert on every frame.
+const RANGES = { threshold: [0.5, 0.95], cooldown: [10, 600], volume: [0, 1], repeat: [1, 10] };
+function sanitize(key, value) {
+  if (key in RANGES) {
+    const n = Number(value), [min, max] = RANGES[key];
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : DEFAULTS[key];
+  }
+  if (key === 'tone') return TONE_KEYS.includes(value) ? value : DEFAULTS.tone; // tones removed in a later version
+  if (typeof DEFAULTS[key] === 'boolean') return !!value;
+  return typeof value === 'string' ? value : DEFAULTS[key];
+}
 function load() {
   try {
     const saved = JSON.parse(localStorage.getItem(KEY)) || {};
     if (saved.version !== SETTINGS_VERSION) saved.threshold = DEFAULTS.threshold; // older saves kept a lower default
-    if (saved.tone && !TONE_KEYS.includes(saved.tone)) delete saved.tone; // tones removed in a later version
     const picked = {};
-    for (const key of Object.keys(DEFAULTS)) if (key in saved) picked[key] = saved[key];
+    for (const key of Object.keys(DEFAULTS)) if (key in saved) picked[key] = sanitize(key, saved[key]);
     return picked;
   } catch { return {}; }
 }
+const settings = { ...DEFAULTS, ...load() };
 function save() { try { localStorage.setItem(KEY, JSON.stringify({ ...settings, version: SETTINGS_VERSION })); } catch { /* private mode */ } }
 function notice(text, kind = '') { const el = $('#notice'); el.textContent = text; el.className = kind; el.hidden = !text; }
 function fmtTime(d = new Date()) { return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }
@@ -39,15 +50,20 @@ function bindSettings() {
     if (el.dataset.bound) continue;
     el.dataset.bound = '1';
     el.addEventListener(el.type === 'checkbox' || el.type === 'number' || el.tagName === 'SELECT' ? 'change' : 'input', () => {
-      settings[key] = el.type === 'checkbox' ? el.checked : el.type === 'number' || el.type === 'range' ? Number(el.value) : el.value.trim();
+      settings[key] = sanitize(key, el.type === 'checkbox' ? el.checked : el.value.trim());
+      if (el.type === 'number') el.value = settings[key]; // show the clamped value
       save(); renderSettings();
     });
   }
 }
+const WEBHOOK_HINTS = ['디스코드 웹훅 URL 형식이 아니에요.', '웹훅 URL을 입력해 주세요.'];
+function webhookHint() { return settings.webhook ? WEBHOOK_HINTS[0] : WEBHOOK_HINTS[1]; }
 function renderSettings() {
   $('#threshold-value').value = settings.threshold.toFixed(2);
   $('#meter-mark').style.left = `${settings.threshold * 100}%`;
-  if (settings.discord && !isDiscordUrl(settings.webhook)) $('#discord-state').textContent = settings.webhook ? '디스코드 웹훅 URL 형식이 아니에요.' : '웹훅 URL을 입력해 주세요.';
+  const state = $('#discord-state');
+  if (settings.discord && !isDiscordUrl(settings.webhook)) state.textContent = webhookHint();
+  else if (WEBHOOK_HINTS.includes(state.textContent)) state.textContent = ''; // the URL became valid (or Discord was turned off)
 }
 $('#settings-reset').onclick = () => {
   if (!confirm('알림 설정을 기본값으로 되돌릴까요? 웹훅 URL도 지워져요.')) return;
@@ -113,13 +129,13 @@ function offerFrame(frame) {
   lastFrameAt = Date.now(); $('#stale-line').hidden = true;
   if (busy || now - lastSent < MIN_FRAME_GAP) { frame.close(); return; }
   busy = true; lastSent = now;
-  worker.postMessage({ type: 'frame', image: frame, ts: Date.now() }, [frame]);
+  ensureWorker().postMessage({ type: 'frame', image: frame, ts: Date.now() }, [frame]);
 }
 async function grabFromVideo() {
   const video = $('#preview');
   if (busy || video.readyState < 2) return;
   busy = true; lastSent = performance.now(); lastFrameAt = Date.now(); $('#stale-line').hidden = true;
-  try { const bmp = await createImageBitmap(video); worker.postMessage({ type: 'frame', image: bmp, ts: Date.now() }, [bmp]); }
+  try { const bmp = await createImageBitmap(video); ensureWorker().postMessage({ type: 'frame', image: bmp, ts: Date.now() }, [bmp]); }
   catch { busy = false; }
 }
 function stopCapture(message) {
@@ -148,7 +164,8 @@ function ensureWorker() {
     if (data.type === 'error') { $('#detect-line').textContent = `검사 오류: ${data.message}`; return; }
     onResult(data);
   };
-  worker.onerror = e => { busy = false; notice(`감지 모듈 오류: ${e.message}`, 'error'); };
+  // A crashed worker would never answer again and leave `busy` stuck; drop it so the next frame starts a fresh one.
+  worker.onerror = e => { worker.terminate(); worker = null; busy = false; notice(`감지 모듈 오류: ${e.message}`, 'error'); };
   return worker;
 }
 function onResult(r) {
@@ -162,12 +179,12 @@ function onResult(r) {
   }
 }
 function renderResult(r) {
-  const pct = Math.max(0, Math.min(1, r.score)) * 100;
-  const fill = $('#meter-fill'); fill.style.width = `${pct}%`; fill.classList.toggle('hit', r.score >= settings.threshold);
+  const shown = Math.max(0, Math.min(1, r.score)); // the detector reports -1 when nothing in the corner resembles a title
+  const fill = $('#meter-fill'); fill.style.width = `${shown * 100}%`; fill.classList.toggle('hit', r.score >= settings.threshold);
   recent.push({ ts: r.ts, score: r.score, name: r.name });
   while (recent.length && r.ts - recent[0].ts > 30000) recent.shift();
   const peak = recent.reduce((m, e) => e.score > m.score ? e : m, recent[0]);
-  $('#detect-line').textContent = DEBUG ? `유사도 ${r.score.toFixed(2)} · 최근 30초 최고 ${peak.score.toFixed(2)} (${peak.name || '-'})` : `도착 화면 유사도 ${r.score.toFixed(2)} · 감시 중`;
+  $('#detect-line').textContent = DEBUG ? `유사도 ${shown.toFixed(2)} · 최근 30초 최고 ${Math.max(0, peak.score).toFixed(2)} (${peak.name || '-'})` : `도착 화면 유사도 ${shown.toFixed(2)} · 감시 중`;
   $('#detect-tech').textContent = `${fmtTime(new Date(r.ts))} 검사 · ${r.frameWidth}×${r.frameHeight} · ${r.ms}ms`;
   const box = $('#match-box'), video = $('#preview');
   if (r.score >= settings.threshold - 0.2 && video.videoWidth) {
@@ -272,6 +289,7 @@ function fileSource(ctx, buffer, out) {
 async function scheduleTone(ctx, out, tone, start, times) {
   if (tone.file) {
     const buffer = await loadBuffer(tone.file);
+    start = Math.max(start, ctx.currentTime + 0.02); // the first download may have taken longer than the planned start
     const gap = Math.max(tone.length, buffer.duration) + 0.25;
     for (let n = 0; n < times; n++) fileSource(ctx, buffer, out).start(start + n * gap);
     return;
@@ -308,7 +326,7 @@ toneGrid.addEventListener('click', e => {
 $('#sound-test').onclick = () => playChime();
 
 async function sendDiscord(content) {
-  if (!isDiscordUrl(settings.webhook)) { $('#discord-state').textContent = settings.webhook ? '디스코드 웹훅 URL 형식이 아니에요.' : '웹훅 URL을 입력해 주세요.'; return false; }
+  if (!isDiscordUrl(settings.webhook)) { $('#discord-state').textContent = webhookHint(); return false; }
   try {
     const res = await fetch(settings.webhook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, username: '항로 입항 알림' }) });
     if (!res.ok) { $('#discord-state').textContent = `디스코드 응답 오류 ${res.status}`; return false; }
