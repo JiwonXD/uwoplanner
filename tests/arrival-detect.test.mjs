@@ -2,7 +2,17 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import templates from '../web/arrival-template.js';
 const template = templates.find(t => t.name === '도시');
-import { decodeRle, detect, scaleTemplate, dilate, brightMask } from '../web/detect.js';
+import { decodeRle, detect, scaleTemplate, dilate, brightMask, suppressLookalike } from '../web/detect.js';
+
+test('a look-alike that fits better than every arrival template suppresses the arrival score', () => {
+  const departure = templates.find(t => t.negative);
+  assert.ok(departure && departure.label === '항해', 'departure loading screen registered as a negative template');
+  assert.ok(templates.filter(t => !t.negative).length >= 2, 'arrival templates remain');
+  assert.equal(suppressLookalike(0.9, 0.5), 0.9); // real city screen: 항해 fits worse, nothing changes
+  assert.equal(suppressLookalike(0.9, -1), 0.9); // no look-alike candidate at all
+  assert.ok(Math.abs(suppressLookalike(0.79, 0.84) - 0.69) < 1e-9); // borderline departure frame falls below the threshold
+  assert.equal(suppressLookalike(0.5, 0.97), 0); // typical departure frame
+});
 
 function frameWithTemplate({ width, height, scale, x, y, noise = 0, seed = 1 }) {
   const mask = new Uint8Array(width * height);

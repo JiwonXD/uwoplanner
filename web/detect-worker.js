@@ -1,5 +1,5 @@
 import templates from './arrival-template.js';
-import { brightMasks, detect, defaultScales } from './detect.js';
+import { brightMasks, detect, defaultScales, suppressLookalike } from './detect.js';
 
 // The search region is downscaled to this width, so the title block is always about 100-145px wide
 // regardless of the capture resolution, and only a narrow band of template scales must be tried.
@@ -39,14 +39,17 @@ self.onmessage = ({ data }) => {
     const live = !data.test || opts.live; // test frames can opt in to the live lock-on path
     const useLock = live && lock.scale !== null && (lock.frames++ % FULL_SEARCH_EVERY) !== 0;
     const scales = useLock ? ALL_SCALES.filter(s => Math.abs(s - lock.scale) <= 0.1 + 1e-9) : ALL_SCALES;
-    let best = { score: -1, name: null };
+    let best = { score: -1, name: null }, lookalike = { score: -1, name: null };
     templates.forEach((tpl, i) => {
       let cache = caches.get(tpl.name); if (!cache) caches.set(tpl.name, cache = new Map());
       const r = detect(frames[i], tpl, { cache, scales, exactGate: opts.exactGate ?? tpl.exactGate, minScore: opts.minScore, maxOrigin: { x: fullW * MAX_ORIGIN.x * factor, y: fullH * MAX_ORIGIN.y * factor } });
-      if (r.score > best.score) best = { ...r, name: tpl.label || tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale };
+      const target = tpl.negative ? lookalike : best;
+      if (r.score > target.score) Object.assign(target, r, { name: tpl.label || tpl.name, boxW: tpl.width * r.scale, boxH: tpl.height * r.scale });
     });
+    const raw = best.score;
+    best.score = suppressLookalike(raw, lookalike.score); // see detect.js: departure screen vs city screen
     if (live && best.score >= LOCK_SCORE) lock.scale = best.scale;
-    self.postMessage({ type: 'result', ts: data.ts, test: data.test, name: best.name, score: best.score, a: best.a, b: best.b, c: best.c, exact: best.exact,
+    self.postMessage({ type: 'result', ts: data.ts, test: data.test, name: best.name, score: best.score, raw, lookalike: lookalike.name, lookalikeScore: lookalike.score, a: best.a, b: best.b, c: best.c, exact: best.exact,
       x: best.x / factor, y: best.y / factor, boxW: (best.boxW || 0) / factor, boxH: (best.boxH || 0) / factor,
       frameWidth: fullW, frameHeight: fullH, locked: useLock, ms: Math.round(performance.now() - started) });
   } catch (error) {
