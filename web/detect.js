@@ -89,6 +89,13 @@ function scoreAt(frame, st, x, y) {
   return { score, a, b, c, exact };
 }
 
+// Negative templates describe screens that share an arrival title's layout (the departure loading
+// screen "항해 / 항해 준비 중입니다." versus the city screen "도시 / 입항 중입니다."). When the best
+// look-alike fits better than the best arrival template, the arrival score drops by twice the margin.
+export function suppressLookalike(score, lookalike) {
+  return lookalike > score ? Math.max(0, score - 2 * (lookalike - score)) : score;
+}
+
 export function defaultScales(min = 0.5, max = 2.2, step = 0.05) {
   const list = [];
   for (let s = min; s <= max + 1e-9; s += step) list.push(Math.round(s * 1000) / 1000);
