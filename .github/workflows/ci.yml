@@ -24,5 +24,7 @@ jobs:
           node-version: '22'
       - name: Run tests
         run: npm test
+      - name: Test public data collector (offline fixtures)
+        run: python3 -m unittest discover -s tests -p test_collect_world.py
       - name: Build site
         run: npm run build

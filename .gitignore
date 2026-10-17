@@ -6,3 +6,4 @@ data/site-source/
 *.sqlite
 .claude/
 data/arrival-samples/
+data/world/
