@@ -1,6 +1,6 @@
 // Pure calendar functions shared by the schedule page and the Node tests. Times are epoch milliseconds;
 // "KST wall" values are the same instant shifted by +9h so that UTC getters read Korean wall-clock time.
-import {EPOCH, EVENTS, REGIONS, CALENDAR, CATEGORIES, RECOMMEND, CLIMATES, CATEGORY_SEASONS} from './schedule-data.js';
+import {EPOCH, EVENTS, REGIONS, CALENDAR, CATEGORIES, RECOMMEND, CLIMATES, CATEGORY_SEASONS, GOODS_CATEGORY, REGION_ALIASES} from './schedule-data.js';
 
 export const HOUR = 3600e3, DAY = 24 * HOUR, KST = 9 * HOUR;
 const epochMs = Date.parse(EPOCH);
@@ -50,24 +50,61 @@ export function recommendPandemic(event, region) {
 }
 export function recommendBoost(category) { return RECOMMEND.boost[category] || []; }
 
-// 부양 entries typed or pasted by the user, one per line, e.g. "*11시 메리다 미술품 부양",
-// "2026-10-25 00:00 제노바 직물" or "17:30 보르도 귀금속 부양 관세 21%". Lines without a known category
-// are reported back instead of guessed. `day` (YYYY-MM-DD) is used when a line has no date; hours before
-// `rollover` are taken as the next day so a late-night list ("…, 00시 제노바") keeps its order.
-export function parseBoosts(text, day, {rollover = 0} = {}) {
-  const boosts = [], rejected = [];
-  for (const raw of String(text).split(/\r?\n/)) {
-    const line = raw.replace(/^[\s*•·-]+/, '').trim(); if (!line) continue;
-    const m = line.match(/^(?:(\d{4})[-./](\d{1,2})[-./](\d{1,2})\s+)?(\d{1,2})(?:시\s*(\d{1,2})?분?|:(\d{2}))?\s+(.+)$/);
-    const words = m ? m[7].replace(/부양|행사/g, ' ').split(/[\s,·-]+/).filter(Boolean) : [];
-    const category = words.find(w => CATEGORIES.includes(w));
-    const city = words.find(w => w !== category && !/^관세|%$|^\d+$/.test(w));
-    const hour = m ? Number(m[4]) : NaN, minute = m ? Number(m[5] || m[6] || 0) : NaN;
-    if (!m || !category || !city || hour > 23 || minute > 59) { rejected.push(raw.trim()); continue; }
-    const tariff = line.match(/관세\s*:?\s*(\d{1,2})\s*%/);
-    let start = kstTime(m[1] ? `${m[1]}-${pad(m[2])}-${pad(m[3])}` : day, hour, minute);
-    if (!m[1] && hour < rollover) start += DAY;
-    boosts.push({kind: 'boost', start, end: start + HOUR, city, category, tariff: tariff ? Number(tariff[1]) : null, goods: recommendBoost(category)});
+// 부양 entries typed or pasted by the user. Accepts single lines ("*11시 메리다 미술품 부양",
+// "17:30 브레멘 향신료 관세 1%", "2026-10-25 09:09 산티아고 미술품") and whole chat exports of community
+// guides: date headers ("2026년 10월 24일 토요일") set the day, "[대화명] [오후 2:48]" prefixes are dropped
+// (names are never kept), and 대유행 lines are skipped because the page computes those. A boost may name
+// goods instead of a category ("16시 아르한겔스크 목피화 부양"); goods after " - " become that boost's list.
+// Times: within one message a smaller hour than the previous line means the next day ("…22시, 00시"); a
+// line earlier than its message's post time, or (for typed lines) already over at `now`, moves to the next day.
+const REGION_WORDS = [...REGIONS.map(r => r.name), ...Object.keys(REGION_ALIASES)].map(w => w.replace(/\s+/g, ''));
+const EVENT_NAMES = EVENTS.map(e => e.name);
+const SKIP = /님이 (들어왔|나갔)습니다|메시지가 삭제|^사진( \d+장)?$|^https?:\/\/|^특물\b|점검|^서버 ?on/i;
+function goodsCategoryAt(words, from) {
+  for (let end = words.length; end > from; end--) {
+    const category = GOODS_CATEGORY[words.slice(from, end).join('')];
+    if (category) return {category, goods: words.slice(from, end).join(' ')};
   }
-  return {boosts, rejected};
+  return null;
+}
+export function parseBoosts(text, day, {now = null} = {}) {
+  const boosts = [], rejected = [];
+  let pandemic = 0, current = day, posted = null, lastHour = -1;
+  for (const raw of String(text).split(/\r?\n/)) {
+    let line = raw.trim(); if (!line) continue;
+    const header = line.match(/^(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+    if (header) { current = `${header[1]}-${pad(header[2])}-${pad(header[3])}`; posted = null; lastHour = -1; continue; }
+    const prefix = line.match(/^\[[^\]]*\]\s*\[(오전|오후)\s*(\d{1,2}):(\d{2})\]\s*/);
+    if (prefix) {
+      const h = Number(prefix[2]) % 12 + (prefix[1] === '오후' ? 12 : 0);
+      posted = kstTime(current, h, Number(prefix[3])); lastHour = -1; line = line.slice(prefix[0].length).trim();
+      if (!line) continue;
+    }
+    if (SKIP.test(line)) continue;
+    line = line.replace(/^[*•·-]+\s*/, '');
+    const m = line.match(/^(?:(\d{4})[-./](\d{1,2})[-./](\d{1,2})\s+)?(\d{1,2})(?:시\s*(?:(\d{1,2})분)?|:(\d{2}))\s*(.+)$/);
+    if (!m) { if (/부양/.test(line)) rejected.push(raw.trim()); continue; }
+    const [body, listed] = m[7].split(/\s+-\s+/);
+    const words = body.replace(/\(.*?\)/g, ' ').split(/[\s,·]+/).filter(Boolean).filter(w => w !== '부양' && w !== '행사');
+    const compact = body.replace(/\s+/g, '');
+    if (!/부양/.test(body) && REGION_WORDS.some(r => compact.includes(r)) && EVENT_NAMES.some(e => body.includes(e))) { pandemic++; continue; }
+    const hour = Number(m[4]), minute = Number(m[5] || m[6] || 0);
+    const city = words[0];
+    let category = words.slice(1).find(w => CATEGORIES.includes(w)) || null, named = null;
+    if (!category) { const found = goodsCategoryAt(words, 1); if (found) ({category, goods: named} = found); }
+    if (!city || !category || hour > 23 || minute > 59 || REGION_WORDS.includes(city.replace(/\s+/g, ''))) { rejected.push(raw.trim()); continue; }
+    const date = m[1] ? `${m[1]}-${pad(m[2])}-${pad(m[3])}` : current;
+    let start = kstTime(date, hour, minute);
+    if (!m[1]) {
+      if (lastHour >= 0 && hour < lastHour) start += DAY;
+      else if (posted !== null ? start < posted - HOUR / 2 : now !== null && start + HOUR <= now) start += DAY;
+      lastHour = hour;
+    }
+    const tariff = line.match(/관세\s*:?\s*(\d{1,2})\s*%/);
+    const own = (listed || '').split(/[,،]/).map(x => x.replace(/\(.*?\)|부양$/g, '').trim()).filter(Boolean).map(name => ({name}));
+    const same = x => x.name.replace(/\s+/g, '') === (named || '').replace(/\s+/g, '');
+    const goods = own.length ? own : named ? [recommendBoost(category).find(same) || {name: named}, ...recommendBoost(category).filter(x => !same(x))] : recommendBoost(category);
+    boosts.push({kind: 'boost', start, end: start + HOUR, city, category, tariff: tariff ? Number(tariff[1]) : null, goods});
+  }
+  return {boosts, rejected, pandemic};
 }

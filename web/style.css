@@ -443,3 +443,29 @@ textarea:focus{outline:none;border-color:var(--teal);box-shadow:var(--ring)}
 .grid-legend span{padding:2px 8px;border-radius:999px;font-weight:600;color:var(--ink)}
 @media(max-width:900px){.schedule-layout{grid-template-columns:1fr}}
 @media(max-width:600px){.event{grid-template-columns:52px minmax(0,1fr)}.event-status{grid-column:2;white-space:normal}.schedule-filters .goal-modes{min-width:0;width:100%}}
+
+/* ---- 대유행별 물물교환 ---- */
+.barter-panel{margin-top:18px}
+.barter-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 12px}
+.barter-filters input{flex:1;min-width:200px}
+.event-chips{display:flex;flex-wrap:wrap;gap:6px}
+.event-chips button{min-height:32px;padding:4px 12px;font-size:12px;border-radius:999px;border-color:var(--line)}
+.event-chips button[data-barter-event=""]{background:var(--surface)}
+.event-chips button[aria-pressed=true]{outline:2px solid var(--teal);outline-offset:1px;font-weight:700}
+.barter-table{border-collapse:collapse;width:100%;font-size:12px;min-width:980px}
+.barter-table th,.barter-table td{border:1px solid var(--line);padding:4px 6px;vertical-align:middle}
+.barter-table thead th{background:var(--surface-3);font-weight:600;white-space:nowrap;position:sticky;top:0}
+.barter-table thead th.now,.barter-table td.now{background:#fbefc4}
+.barter-table tbody{border-top:2px solid var(--line-strong)}
+.barter-table .village{min-width:110px;text-align:center;font-weight:600;background:var(--surface)}
+.barter-table .events span{display:block;margin:2px 0;padding:1px 6px;border-radius:999px;text-align:center;font-weight:600;white-space:nowrap}
+.barter-table .product{min-width:100px;text-align:center}
+.barter-table .product b{display:block}
+.barter-table .product small{display:block;color:var(--muted)}
+.barter-table .product .cond{color:var(--coral);font-weight:600}
+.barter-table .material{white-space:nowrap;font-weight:600}
+.barter-table .ports{min-width:150px}
+.barter-table td.up,.barter-table td.down{text-align:center;font-weight:700;width:30px}
+.barter-table td.up{color:var(--teal);background:#e5f2ec}.barter-table td.down{color:var(--coral);background:#f9e6df}
+.barter-table td.up.now,.barter-table td.down.now{box-shadow:inset 0 0 0 2px #e2b84c}
+.barter-table .from-village{color:var(--coral);text-align:center}

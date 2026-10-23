@@ -24,11 +24,11 @@
       </section>
       <aside class="schedule-side">
         <section class="panel"><div class="panel-title"><h2>부양 일정 추가</h2><button id="boost-clear-past" class="text-button">지난 일정 지우기</button></div>
-          <p class="small">게임의 교역 이벤트 일정 창을 보고 한 줄에 하나씩 적거나, 공유받은 일정을 그대로 붙여 넣으세요.</p>
+          <p class="small">게임의 교역 이벤트 일정 창을 보고 한 줄에 하나씩 적거나, 단톡방에서 공유받은 일정을 통째로 붙여 넣으세요. 날짜 줄과 부양 줄만 읽고 대화명·잡담·대유행 줄은 버려요.</p>
           <label class="field-label" for="boost-text">부양 일정</label>
-          <textarea id="boost-text" rows="5" placeholder="11시 메리다 미술품 부양&#10;17:30 브레멘 향신료 관세 1%&#10;2026-10-25 09:09 산티아고 미술품"></textarea>
-          <div class="inline-fields"><label>날짜 없는 줄의 기준일 <input id="boost-day" type="date"></label><button id="boost-add" class="primary" type="button">추가</button></div>
-          <p class="small hint">06시 전 시각은 다음 날로 넣어요. 자정을 넘기는 일정을 이어서 붙여 넣을 수 있게 하기 위해서예요.</p>
+          <textarea id="boost-text" rows="5" placeholder="11시 메리다 미술품 부양&#10;16시 아르한겔스크 목피화 부양&#10;17:30 브레멘 향신료 관세 1%&#10;2026-10-25 09:09 산티아고 미술품"></textarea>
+          <div class="inline-fields"><label>날짜 줄이 없을 때 기준일 <input id="boost-day" type="date"></label><button id="boost-add" class="primary" type="button">추가</button></div>
+          <p class="small hint">"22시 …" 다음 줄의 "00시 …"처럼 앞 줄보다 이른 시각과 이미 지난 시각은 다음 날로 넣어요. "16시 아르한겔스크 목피화 부양"처럼 카테고리 대신 교역품을 적어도 돼요.</p>
           <p id="boost-result" class="small" role="status" aria-live="polite"></p>
           <ul id="boost-list" class="boost-list"></ul>
         </section>
@@ -41,6 +41,12 @@
     <section class="panel pandemic-panel"><div class="panel-title"><h2>대유행 스케줄</h2><label class="small">날짜 <input id="grid-day" type="date"></label></div>
       <div class="table-scroll"><table id="pandemic-grid" class="pandemic-grid"></table></div>
       <p id="grid-legend" class="grid-legend small"></p>
+    </section>
+    <section id="barter" class="panel barter-panel"><div class="panel-title"><h2>대유행별 물물교환</h2><span id="barter-count" class="small hint"></span></div>
+      <p class="small">대유행이 오른 카테고리의 마을 교환품과 재료, 재료를 파는 항구를 보여 줘요. 월별 칸은 그 항구의 기후로 계산한 성수기(▲)·비수기(▼)이고, 강조된 열이 현재 게임 월이에요.</p>
+      <div class="barter-filters"><div id="barter-events" class="event-chips" role="group" aria-label="대유행 종류"></div><input id="barter-search" type="search" placeholder="마을·교역품·재료·항구 검색" aria-label="물물교환 검색"></div>
+      <div class="table-scroll"><table id="barter-table" class="barter-table"></table></div>
+      <p id="barter-empty" class="small hint" hidden></p>
     </section>
     <footer><span>항로 · 대항해시대 오리진 팬 도구</span><span>대유행은 주기 공식으로 계산 · 부양은 직접 입력</span><button id="about" class="text-button">일정 계산 안내</button></footer>
   </main>
