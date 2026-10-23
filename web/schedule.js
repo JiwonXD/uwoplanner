@@ -5,10 +5,6 @@ const $ = s => document.querySelector(s);
 const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const BOOST_KEY = 'uwo-boosts';
 const EVENT_INDEX = Object.fromEntries(EVENTS.map((e, i) => [e.name, i]));
-// Category symbols are our own (emoji), not game artwork.
-const CATEGORY_ICON = {식료품: '🍞', 조미료: '🧂', 주류: '🍷', 가축: '🐄', 기호품: '☕', 의약품: '💊', 잡화: '🧺', 섬유: '🧶',
-  직물: '🧵', 염료: '🎨', 공예품: '🏺', 미술품: '🖼️', 향료: '🌸', 향신료: '🌶️', 보석: '💎', 귀금속: '🪙', 광석: '⛏️',
-  공업품: '⚙️', 무기류: '⚔️', 총포류: '💥'};
 const opened = new Set(); // rows whose recommendations are expanded
 
 // ---- stored 부양 entries (per browser) ----
@@ -29,7 +25,7 @@ function notice(text) { $('#notice').textContent = text; $('#notice').hidden = !
 
 // ---- event table, laid out like the in-game 교역 이벤트 일정 window ----
 const rowKey = e => `${e.kind}|${e.start}|${e.city || e.region}`;
-const categoryCell = c => { const name = c.replace(/\(.*\)/, ''); return `<span class="cat"${name !== c ? ` title="${escape(c)}"` : ''}><i aria-hidden="true">${CATEGORY_ICON[name] || '📦'}</i>${escape(name)}</span>`; };
+const categoryCell = c => { const name = c.replace(/\(.*\)/, ''); return `<span class="cat"${name !== c ? ` title="${escape(c)}"` : ''}>${escape(name)}</span>`; };
 function stamp(ms) { const [y, mo, d] = kstDate(ms).split('-'); return `<span class="stamp"><span>${y}/${mo}/${d}</span><span>${kstClock(ms)}</span></span>`; }
 function renderToday(now) {
   const items = [...pandemicEvents(now - HOUR, now + DAY), ...boosts.filter(b => b.end > now && b.start < now + DAY)]

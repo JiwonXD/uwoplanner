@@ -409,8 +409,7 @@ body.busy #collection input,body.busy #collection .collection-bulk button,body.b
 .pill{min-width:60px;text-align:center;font-size:12px;font-weight:800;padding:3px 10px;border-radius:6px;color:#16323b}
 .pill-boost{background:#5ad32e;color:#0d2d05}
 .et-goods{display:flex;flex-wrap:wrap;gap:4px 12px}
-.cat{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px}
-.cat i{font-style:normal;font-size:17px;width:28px;height:28px;display:inline-grid;place-items:center;background:var(--brass-soft);border:1px solid #e7d3a2;border-radius:6px}
+.cat{font-weight:700;font-size:14px}
 .et-period{gap:8px;font-size:12px;color:var(--ink-2);font-variant-numeric:tabular-nums}
 .stamp{display:flex;flex-direction:column;align-items:center;line-height:1.35}
 .tilde{color:var(--muted)}
