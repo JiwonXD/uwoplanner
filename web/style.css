@@ -425,8 +425,7 @@ textarea:focus{outline:none;border-color:var(--teal);box-shadow:var(--ring)}
 .boost-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px;max-height:220px;overflow:auto}
 .boost-list li{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:4px 8px;border-radius:8px;background:var(--surface-2)}
 .icon-button{min-height:0;min-width:28px;height:28px;padding:0 8px;border-radius:999px;font-size:13px;line-height:1}
-[data-event="0"]{background:#f6e7b8}[data-event="1"]{background:#f4d6e4}[data-event="2"]{background:#d6e6f6}[data-event="3"]{background:#f6d6d2}
-[data-event="4"]{background:#dcdcf6}[data-event="5"]{background:#d3eedf}[data-event="6"]{background:#efecc2}[data-event="7"]{background:#e8dcf3}
+.pill-pandemic{background:#f2c94c;color:#3d2c00}
 @media(max-width:640px){
   .et-head{display:none}
   .et-row{grid-template-columns:68px minmax(0,1fr);grid-template-areas:"kind goods" "kind period" "kind where";row-gap:4px}

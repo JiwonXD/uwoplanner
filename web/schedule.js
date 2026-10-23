@@ -1,10 +1,8 @@
 import {pandemicEvents, gameMonth, parseBoosts, recommendBoost, kstDate, kstClock, DAY, HOUR} from './schedule-core.js';
-import {EVENTS} from './schedule-data.js';
 
 const $ = s => document.querySelector(s);
 const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const BOOST_KEY = 'uwo-boosts';
-const EVENT_INDEX = Object.fromEntries(EVENTS.map((e, i) => [e.name, i]));
 const opened = new Set(); // rows whose recommendations are expanded
 
 // ---- stored 부양 entries (per browser) ----
@@ -34,7 +32,7 @@ function renderToday(now) {
   const rows = items.map(e => {
     const key = rowKey(e), open = opened.has(key), live = e.start <= now;
     const kindCell = e.kind === 'boost' ? '<span class="pill pill-boost">부양</span>'
-      : `<span class="pill pill-pandemic" data-event="${EVENT_INDEX[e.event]}">${escape(e.event)}</span>`;
+      : `<span class="pill pill-pandemic" title="${escape(e.event)}">대유행</span>`;
     const goodsCell = e.kind === 'boost' ? categoryCell(e.category) : e.categories.map(categoryCell).join('');
     const where = e.kind === 'boost' ? `<b>${escape(e.city)}</b>${e.tariff != null ? `<small>관세 : ${e.tariff}%</small>` : ''}` : `<b>${escape(e.region)}</b>`;
     const detail = open ? `<div class="et-detail">${e.goods.length ? e.goods.map(g => `<span class="good" title="${escape([g.where, g.note].filter(Boolean).join(', '))}">${escape(g.name)}</span>`).join('') : '<span class="none">추천 없음</span>'}</div>` : '';
