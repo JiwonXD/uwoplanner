@@ -1,0 +1,19 @@
+name = "uwoplanner-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Default model for the trade assistant. claude-haiku-5-5 is far cheaper if cost matters more than quality.
+MODEL = "claude-opus-5-5"
+ALLOWED_ORIGINS = "https://uwoplanner.com,http://127.0.0.1:4173,http://localhost:4173"
+DAILY_LIMIT = "30"
+
+# Optional per-IP daily limit. Create the namespace with `npx wrangler kv namespace create LIMITS`
+# and paste the returned id here, then uncomment.
+# [[kv_namespaces]]
+# binding = "LIMITS"
+# id = ""
+
+# The API key is a secret, never stored in this file:
+#   npx wrangler secret put ANTHROPIC_API_KEY

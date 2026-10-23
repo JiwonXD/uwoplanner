@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>교역 도우미 - UWO planner</title>
+  <meta name="description" content="대유행과 부양 일정, 도시를 물어보면 어떤 교역품을 팔면 좋은지 알려 주는 대항해시대 오리진 교역 도우미">
+  <!-- Address of the trade assistant Worker (worker/). Empty until it is deployed. -->
+  <meta name="trade-api" content="">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
+  <script type="module" src="./trade.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><img src="./favicon.svg" width="36" height="36" alt=""><span>항로 <small>ORIGIN FLEET PLANNER</small></span></a></header>
+  <main class="chat-main">
+    <nav class="page-nav" aria-label="주 메뉴"><a href="./#planner">선단 배치</a><a href="./#collection">항해사 목록</a><a href="./trade.html" aria-current="page">교역 도우미</a><a href="./arrival.html">입항 알림</a></nav>
+    <section class="panel chat-panel">
+      <div id="chat-log" class="chat-log" role="log" aria-live="polite"></div>
+      <form id="chat-form" class="chat-form">
+        <textarea id="chat-input" rows="1" maxlength="1500" placeholder="예: 오늘 밤 보르도 귀금속 부양에 뭐 팔아?" aria-label="질문"></textarea>
+        <button id="chat-send" class="primary" type="submit" aria-label="보내기" title="보내기 (Enter)">↑</button>
+      </form>
+    </section>
+    <footer><span>항로 대항해시대 오리진 팬 도구</span><button id="chat-reset" class="icon-button" type="button" title="대화 지우기" aria-label="대화 지우기">⟲</button></footer>
+  </main>
+  <!-- Cloudflare Web Analytics -->
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "ebdd2bc1af7b46fd985fac5d320b441a"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+</body></html>

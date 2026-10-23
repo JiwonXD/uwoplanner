@@ -8,3 +8,7 @@ data/site-source/
 data/arrival-samples/
 # Generated from locally collected community data; publish only with the sources' permission.
 web/barter-data.json
+
+# Cloudflare Worker local state
+.wrangler/
+.dev.vars

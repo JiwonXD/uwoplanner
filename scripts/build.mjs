@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 const root = new URL('../', import.meta.url);
 const out = new URL('dist/', root);
 await mkdir(out, { recursive: true });
-const files=['index.html','style.css','app.js','model.js','solver.js','worker.js','favicon.svg','arrival.html','arrival.js','detect.js','detect-worker.js','arrival-template.js','schedule.html','schedule.js','schedule-core.js','schedule-data.js'];
+const files=['index.html','style.css','app.js','model.js','solver.js','worker.js','favicon.svg','arrival.html','arrival.js','detect.js','detect-worker.js','arrival-template.js','trade.html','trade.js'];
 const sources=await Promise.all(files.map(file=>readFile(new URL(`web/${file}`,root),'utf8')));
 const catalogText=await readFile(new URL('data/simulator/catalog.json',root),'utf8');
 const revision=createHash('sha256').update(sources.join('\n')).update(catalogText).digest('hex').slice(0,12);
