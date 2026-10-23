@@ -26,7 +26,7 @@ const rowKey = e => `${e.kind}|${e.start}|${e.city || e.region}`;
 const categoryCell = c => { const name = c.replace(/\(.*\)/, ''); return `<span class="cat"${name !== c ? ` title="${escape(c)}"` : ''}>${escape(name)}</span>`; };
 function stamp(ms) { const [y, mo, d] = kstDate(ms).split('-'); return `<span class="stamp"><span>${y}/${mo}/${d}</span><span>${kstClock(ms)}</span></span>`; }
 function renderToday(now) {
-  const items = [...pandemicEvents(now - HOUR, now + DAY), ...boosts.filter(b => b.end > now && b.start < now + DAY)]
+  const items = [...pandemicEvents(now - 2 * HOUR, now + DAY), ...boosts.filter(b => b.end > now && b.start < now + DAY)]
     .filter(e => e.end > now)
     .sort((a, b) => a.start - b.start || (a.kind === 'boost' ? -1 : 1));
   const rows = items.map(e => {

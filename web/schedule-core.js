@@ -1,6 +1,6 @@
 // Pure calendar functions shared by the schedule page and the Node tests. Times are epoch milliseconds;
 // "KST wall" values are the same instant shifted by +9h so that UTC getters read Korean wall-clock time.
-import {EPOCH, EVENTS, REGIONS, CALENDAR, CATEGORIES, RECOMMEND, CLIMATES, CATEGORY_SEASONS, GOODS_CATEGORY, REGION_ALIASES} from './schedule-data.js';
+import {EPOCH, EVENTS, REGIONS, CALENDAR, CATEGORIES, RECOMMEND, CLIMATES, CATEGORY_SEASONS, GOODS_CATEGORY, REGION_ALIASES, PANDEMIC_HOURS} from './schedule-data.js';
 
 export const HOUR = 3600e3, DAY = 24 * HOUR, KST = 9 * HOUR;
 const epochMs = Date.parse(EPOCH);
@@ -30,14 +30,14 @@ export function nextMonthChange(ms) {
 export function climateSeasons(month) { return CLIMATES.map(c => ({...c, season: c.months[month - 1]})); }
 export function seasonEffect(category, season) { return CATEGORY_SEASONS[category]?.[season] || 0; }
 
-// 대유행 events starting in [from, to). Each lasts one hour from the top of its hour.
+// 대유행 events starting in [from, to). Each lasts PANDEMIC_HOURS from the top of its hour.
 export function pandemicEvents(from, to) {
   const out = [];
   for (let h = Math.ceil((from - epochMs) / HOUR); epochMs + h * HOUR < to; h++) {
     for (const region of REGIONS) for (const event of EVENTS) {
       if (((region.base + h) % event.period + event.period) % event.period === 0) {
         const start = epochMs + h * HOUR;
-        out.push({kind: 'pandemic', start, end: start + HOUR, region: region.name, event: event.name, categories: event.categories,
+        out.push({kind: 'pandemic', start, end: start + PANDEMIC_HOURS * HOUR, region: region.name, event: event.name, categories: event.categories,
           goods: recommendPandemic(event.name, region.name)});
       }
     }

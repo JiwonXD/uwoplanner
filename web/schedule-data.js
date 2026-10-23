@@ -4,6 +4,9 @@
 // when (region base + hour index) is divisible by the event's period. The constants match the community
 // calendars (uwo-tips, 대항오 나침반); if a game patch shifts the cycle, only these numbers need updating.
 // Verified against a community daily trade guide: 83 대유행 entries on six days (2026-08-28 ~ 10-24) all match.
+// The periods are the official per-region repeat intervals (director's letter 2025-03-26). Each 대유행 lasts
+// two hours (trade notice 2025-03-17); since 2026-08-10 a fixed-price 추가 매입 follows for one more hour.
+export const PANDEMIC_HOURS = 2;
 export const EPOCH = '2026-02-25T00:00:00+09:00';
 export const EVENTS = [
   {name: '축제', period: 179, categories: ['식료품', '조미료', '기호품']},
