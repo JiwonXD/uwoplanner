@@ -2,8 +2,8 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>교역 일정 · UWO planner</title>
-  <meta name="description" content="대항해시대 오리진 대유행·부양 일정과 이벤트별 추천 교역품, 게임 시간, 카테고리별 성수기·비수기를 한 화면에서 확인합니다.">
+  <title>교역 일정 - UWO planner</title>
+  <meta name="description" content="대항해시대 오리진 대유행과 부양 일정을 한눈에 확인합니다.">
   <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
   <script type="module" src="./schedule.js"></script>
 </head>
@@ -13,44 +13,21 @@
   </header>
   <main>
     <nav class="page-nav" aria-label="주 메뉴"><a href="./#planner">선단 배치</a><a href="./#collection">항해사 목록</a><a href="./schedule.html" aria-current="page">교역 일정</a><a href="./arrival.html">입항 알림</a></nav>
-    <section class="heading"><div><h1>교역 일정</h1><p>대유행·부양 일정과 이벤트마다 가져가면 좋은 교역품을 한 화면에서 확인하세요</p></div>
-      <div class="heading-counts"><div><strong id="now-clock">--:--</strong><span id="now-date">현실 시간 (KST)</span></div><div><strong id="game-month">-월</strong><span id="month-change">게임 시간</span></div></div></section>
+    <section class="heading"><div><h1>교역 일정</h1></div>
+      <div class="heading-counts"><div title="현실 시간 (KST)"><strong id="now-clock">--:--</strong><span>현실</span></div><div title="게임 시간, 매일 09시에 넘어가요"><strong id="game-month">-월</strong><span>게임</span></div></div></section>
     <div id="notice" role="status" aria-live="polite" hidden></div>
-    <div class="schedule-layout">
-      <section class="panel"><div class="panel-title"><h2>오늘 일정</h2><span class="small hint">지금부터 24시간</span></div>
-        <div class="schedule-filters"><label class="checkline"><input id="only-recommended" type="checkbox"> 추천 교역품이 있는 일정만</label>
-          <div class="goal-modes" role="group" aria-label="일정 종류"><button data-kind="all" aria-pressed="true">전체</button><button data-kind="pandemic" aria-pressed="false">대유행</button><button data-kind="boost" aria-pressed="false">부양</button></div></div>
-        <ol id="today" class="event-list"></ol>
-      </section>
-      <aside class="schedule-side">
-        <section class="panel"><div class="panel-title"><h2>부양 일정 추가</h2><button id="boost-clear-past" class="text-button">지난 일정 지우기</button></div>
-          <p class="small">게임의 교역 이벤트 일정 창을 보고 한 줄에 하나씩 적거나, 단톡방에서 공유받은 일정을 통째로 붙여 넣으세요. 날짜 줄과 부양 줄만 읽고 대화명·잡담·대유행 줄은 버려요.</p>
-          <label class="field-label" for="boost-text">부양 일정</label>
-          <textarea id="boost-text" rows="5" placeholder="11시 메리다 미술품 부양&#10;16시 아르한겔스크 목피화 부양&#10;17:30 브레멘 향신료 관세 1%&#10;2026-10-25 09:09 산티아고 미술품"></textarea>
-          <div class="inline-fields"><label>날짜 줄이 없을 때 기준일 <input id="boost-day" type="date"></label><button id="boost-add" class="primary" type="button">추가</button></div>
-          <p class="small hint">"22시 …" 다음 줄의 "00시 …"처럼 앞 줄보다 이른 시각과 이미 지난 시각은 다음 날로 넣어요. "16시 아르한겔스크 목피화 부양"처럼 카테고리 대신 교역품을 적어도 돼요.</p>
-          <p id="boost-result" class="small" role="status" aria-live="polite"></p>
-          <ul id="boost-list" class="boost-list"></ul>
-        </section>
-        <section class="panel"><div class="panel-title"><h2>성수기·비수기</h2><label class="small">게임 <select id="season-month" aria-label="게임 월"></select></label></div>
-          <p class="small">도시의 기후에 따라 열이 달라요. ▲ 성수기, ▼ 비수기예요. 공예품·미술품·잡화·공업품·무기류·총포류는 계절 영향이 없어요.</p>
-          <div class="table-scroll"><table id="season-table" class="season-table"></table></div>
-        </section>
-      </aside>
-    </div>
-    <section class="panel pandemic-panel"><div class="panel-title"><h2>대유행 스케줄</h2><label class="small">날짜 <input id="grid-day" type="date"></label></div>
-      <div class="table-scroll"><table id="pandemic-grid" class="pandemic-grid"></table></div>
-      <p id="grid-legend" class="grid-legend small"></p>
+    <section class="panel schedule-panel">
+      <div id="today" class="event-table" role="table" aria-label="교역 이벤트 일정"></div>
+      <details class="boost-input">
+        <summary title="부양 일정 추가. 한 줄씩 적거나 공유받은 일정을 통째로 붙여 넣어요">＋ 부양</summary>
+        <textarea id="boost-text" rows="4" placeholder="11시 메리다 미술품 부양&#10;16시 아르한겔스크 목피화 부양"></textarea>
+        <div class="inline-fields"><button id="boost-add" class="primary" type="button">추가</button><span id="boost-result" class="small" role="status" aria-live="polite"></span></div>
+        <ul id="boost-list" class="boost-list"></ul>
+      </details>
     </section>
-    <section id="barter" class="panel barter-panel"><div class="panel-title"><h2>대유행별 물물교환</h2><span id="barter-count" class="small hint"></span></div>
-      <p class="small">대유행이 오른 카테고리의 마을 교환품과 재료, 재료를 파는 항구를 보여 줘요. 월별 칸은 그 항구의 기후로 계산한 성수기(▲)·비수기(▼)이고, 강조된 열이 현재 게임 월이에요.</p>
-      <div class="barter-filters"><div id="barter-events" class="event-chips" role="group" aria-label="대유행 종류"></div><input id="barter-search" type="search" placeholder="마을·교역품·재료·항구 검색" aria-label="물물교환 검색"></div>
-      <div class="table-scroll"><table id="barter-table" class="barter-table"></table></div>
-      <p id="barter-empty" class="small hint" hidden></p>
-    </section>
-    <footer><span>항로 · 대항해시대 오리진 팬 도구</span><span>대유행은 주기 공식으로 계산 · 부양은 직접 입력</span><button id="about" class="text-button">일정 계산 안내</button></footer>
+    <footer><span>항로 대항해시대 오리진 팬 도구</span><button id="about" class="icon-button" title="일정 계산 방식" aria-label="일정 계산 방식">?</button></footer>
   </main>
-  <dialog id="about-dialog"><div class="about-content"><h2>일정 계산 방식</h2><p>대유행은 정해진 주기로 돌아요. 기준 시각부터 센 시간 수와 권역별 기준값의 합이 이벤트 주기로 나누어떨어지는 시각에 그 권역에서 1시간 동안 열려요. 그래서 며칠 뒤 일정도 미리 계산할 수 있어요. 게임 패치로 주기가 바뀌면 실제와 어긋날 수 있어요.</p><p>게임 시간은 매일 오전 9시에 한 달씩 넘어가요. 부양은 시장이 정하는 행사라 계산할 수 없어서, 게임의 교역 이벤트 일정 창을 보고 직접 입력해요. 입력한 부양 일정은 이 브라우저에만 저장돼요.</p><p>추천 교역품은 사용자들이 공유한 교역 가이드를 바탕으로 정리한 참고 자료예요. 시세와 재고에 따라 달라질 수 있어요.</p></div><button class="dialog-close" id="about-close">닫기</button></dialog>
+  <dialog id="about-dialog"><div class="about-content"><h2>일정 계산 방식</h2><p>대유행은 정해진 주기로 돌아서 미리 계산할 수 있어요. 게임 패치로 주기가 바뀌면 실제와 어긋날 수 있어요.</p><p>부양은 시장이 정하는 행사라 계산할 수 없어서 직접 입력해요. 입력한 부양 일정은 이 브라우저에만 저장돼요.</p><p>추천 교역품은 사용자들이 공유한 교역 가이드를 바탕으로 정리한 참고 자료예요.</p></div><button class="dialog-close" id="about-close">닫기</button></dialog>
   <!-- Cloudflare Web Analytics -->
   <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "ebdd2bc1af7b46fd985fac5d320b441a"}'></script>
   <!-- End Cloudflare Web Analytics -->
