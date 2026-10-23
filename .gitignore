@@ -6,3 +6,5 @@ data/site-source/
 *.sqlite
 .claude/
 data/arrival-samples/
+# Generated from locally collected community data; publish only with the sources' permission.
+web/barter-data.json

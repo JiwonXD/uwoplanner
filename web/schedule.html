@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>교역 일정 - UWO planner</title>
+  <meta name="description" content="대항해시대 오리진 대유행과 부양 일정을 한눈에 확인합니다.">
+  <link rel="icon" href="./favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="./style.css">
+  <script type="module" src="./schedule.js"></script>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="./"><img src="./favicon.svg" width="36" height="36" alt=""><span>항로 <small>ORIGIN FLEET PLANNER</small></span></a>
+    <div class="top-actions"><span class="local-note">부양 일정은 이 브라우저에만 저장</span></div>
+  </header>
+  <main>
+    <nav class="page-nav" aria-label="주 메뉴"><a href="./#planner">선단 배치</a><a href="./#collection">항해사 목록</a><a href="./schedule.html" aria-current="page">교역 일정</a><a href="./arrival.html">입항 알림</a></nav>
+    <section class="heading"><div><h1>교역 일정</h1></div>
+      <div class="heading-counts"><div title="현실 시간 (KST)"><strong id="now-clock">--:--</strong><span>현실</span></div><div title="게임 시간, 매일 09시에 넘어가요"><strong id="game-month">-월</strong><span>게임</span></div></div></section>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <section class="panel schedule-panel">
+      <div id="today" class="event-table" role="table" aria-label="교역 이벤트 일정"></div>
+      <details class="boost-input">
+        <summary title="부양 일정 추가. 한 줄씩 적거나 공유받은 일정을 통째로 붙여 넣어요">＋ 부양</summary>
+        <textarea id="boost-text" rows="4" placeholder="11시 메리다 미술품 부양&#10;16시 아르한겔스크 목피화 부양"></textarea>
+        <div class="inline-fields"><button id="boost-add" class="primary" type="button">추가</button><span id="boost-result" class="small" role="status" aria-live="polite"></span></div>
+        <ul id="boost-list" class="boost-list"></ul>
+      </details>
+    </section>
+    <footer><span>항로 대항해시대 오리진 팬 도구</span><button id="about" class="icon-button" title="일정 계산 방식" aria-label="일정 계산 방식">?</button></footer>
+  </main>
+  <dialog id="about-dialog"><div class="about-content"><h2>일정 계산 방식</h2><p>대유행은 정해진 주기로 돌아서 미리 계산할 수 있어요. 게임 패치로 주기가 바뀌면 실제와 어긋날 수 있어요.</p><p>부양은 시장이 정하는 행사라 계산할 수 없어서 직접 입력해요. 입력한 부양 일정은 이 브라우저에만 저장돼요.</p><p>추천 교역품은 사용자들이 공유한 교역 가이드를 바탕으로 정리한 참고 자료예요.</p></div><button class="dialog-close" id="about-close">닫기</button></dialog>
+  <!-- Cloudflare Web Analytics -->
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "ebdd2bc1af7b46fd985fac5d320b441a"}'></script>
+  <!-- End Cloudflare Web Analytics -->
+</body></html>
