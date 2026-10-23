@@ -17,7 +17,7 @@ test('대유행 cycle reproduces the 2026-10-24 community guide', () => {
   }
   for (const e of events) { assert.equal(e.end - e.start, HOUR); assert.equal(kstClock(e.start).slice(3), '00'); }
   assert.deepEqual(events.find(e => e.region === '북극해' && e.event === '전염병').goods.map(g => g.name), ['버마서적', '모링가 열매']);
-  assert.deepEqual(events.find(e => e.region === '동아시아' && e.event === '전염병').goods.map(g => g.name), ['골든씰', '구슬인형']);
+  assert.deepEqual(events.find(e => e.region === '동아시아' && e.event === '전염병').goods.map(g => g.name), ['골든씰', '구슬 인형']);
 });
 
 test('game month advances daily at 09:00 KST', () => {
