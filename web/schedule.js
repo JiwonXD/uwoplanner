@@ -3,7 +3,6 @@ import {pandemicEvents, gameMonth, parseBoosts, recommendBoost, kstDate, kstCloc
 const $ = s => document.querySelector(s);
 const escape = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
 const BOOST_KEY = 'uwo-boosts';
-const opened = new Set(); // rows whose recommendations are expanded
 
 // ---- stored 부양 entries (per browser) ----
 function loadBoosts() {
@@ -21,32 +20,28 @@ function saveBoosts(list) {
 let boosts = loadBoosts();
 function notice(text) { $('#notice').textContent = text; $('#notice').hidden = !text; }
 
-// ---- event table, laid out like the in-game 교역 이벤트 일정 window ----
-const rowKey = e => `${e.kind}|${e.start}|${e.city || e.region}`;
+// ---- event table: the in-game 교역 이벤트 일정 columns plus what to sell ----
 const categoryCell = c => { const name = c.replace(/\(.*\)/, ''); return `<span class="cat"${name !== c ? ` title="${escape(c)}"` : ''}>${escape(name)}</span>`; };
+const goodCell = g => { const tip = [g.where, g.note].filter(Boolean).join(', '); return `<span class="good"${tip ? ` title="${escape(tip)}"` : ''}>${escape(g.name)}</span>`; };
 function stamp(ms) { const [y, mo, d] = kstDate(ms).split('-'); return `<span class="stamp"><span>${y}/${mo}/${d}</span><span>${kstClock(ms)}</span></span>`; }
 function renderToday(now) {
   const items = [...pandemicEvents(now - 2 * HOUR, now + DAY), ...boosts.filter(b => b.end > now && b.start < now + DAY)]
     .filter(e => e.end > now)
     .sort((a, b) => a.start - b.start || (a.kind === 'boost' ? -1 : 1));
   const rows = items.map(e => {
-    const key = rowKey(e), open = opened.has(key), live = e.start <= now;
+    const live = e.start <= now;
     const kindCell = e.kind === 'boost' ? '<span class="pill pill-boost">부양</span>'
       : `<span class="pill pill-pandemic" title="${escape(e.event)}">대유행</span>`;
     const goodsCell = e.kind === 'boost' ? categoryCell(e.category) : e.categories.map(categoryCell).join('');
     const where = e.kind === 'boost' ? `<b>${escape(e.city)}</b>${e.tariff != null ? `<small>관세 : ${e.tariff}%</small>` : ''}` : `<b>${escape(e.region)}</b>`;
-    const detail = open ? `<div class="et-detail">${e.goods.length ? e.goods.map(g => `<span class="good" title="${escape([g.where, g.note].filter(Boolean).join(', '))}">${escape(g.name)}</span>`).join('') : '<span class="none">추천 없음</span>'}</div>` : '';
-    return `<div class="et-item${live ? ' live' : ''}"><button class="et-row" role="row" data-row="${escape(key)}" aria-expanded="${open}">`
-      + `<span role="cell" class="et-kind">${kindCell}</span><span role="cell" class="et-goods">${goodsCell}</span>`
-      + `<span role="cell" class="et-period">${stamp(e.start)}<span class="tilde">~</span>${stamp(e.end)}</span><span role="cell" class="et-where">${where}</span></button>${detail}</div>`;
+    const recommend = e.goods.length ? e.goods.map(goodCell).join('') : '<span class="none">-</span>';
+    return `<div class="et-row${live ? ' live' : ''}" role="row"><span role="cell" class="et-kind">${kindCell}</span><span role="cell" class="et-goods">${goodsCell}</span>`
+      + `<span role="cell" class="et-rec">${recommend}</span>`
+      + `<span role="cell" class="et-period">${stamp(e.start)}<span class="tilde">~</span>${stamp(e.end)}</span><span role="cell" class="et-where">${where}</span></div>`;
   }).join('');
-  $('#today').innerHTML = '<div class="et-head" role="row"><span role="columnheader">행사</span><span role="columnheader">교역품</span><span role="columnheader">기간</span><span role="columnheader">위치</span></div>'
+  $('#today').innerHTML = '<div class="et-head" role="row"><span role="columnheader">행사</span><span role="columnheader">교역품</span><span role="columnheader">추천</span><span role="columnheader">기간</span><span role="columnheader">위치</span></div>'
     + (rows || '<p class="empty-roster">예정된 일정이 없어요.</p>');
 }
-$('#today').onclick = e => {
-  const row = e.target.closest('[data-row]'); if (!row) return;
-  const key = row.dataset.row; opened.has(key) ? opened.delete(key) : opened.add(key); renderToday(Date.now());
-};
 
 // ---- 부양 input ----
 function renderBoosts(now) {
